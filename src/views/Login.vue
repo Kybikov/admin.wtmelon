@@ -137,13 +137,13 @@ async function onLogin() {
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: var(--va-background-secondary) !important;
   backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid var(--va-background-element) !important;
   border-radius: 24px !important;
   padding: 40px !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
-  color: #1a1a1a !important;
+  color: var(--va-text-primary) !important;
 }
 
 .login-header {
@@ -171,14 +171,14 @@ async function onLogin() {
 .logo-title {
   font-size: 28px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--va-text-primary);
   margin: 0;
   line-height: 1.2;
 }
 
 .logo-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--va-text-secondary);
   margin: 0;
   font-weight: 500;
 }
@@ -186,13 +186,13 @@ async function onLogin() {
 .login-title {
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--va-text-primary);
   margin: 0 0 8px 0;
 }
 
 .login-description {
   font-size: 16px;
-  color: #666;
+  color: var(--va-text-secondary);
   margin: 0;
 }
 
@@ -207,8 +207,8 @@ async function onLogin() {
 }
 
 :deep(.login-input .va-input-wrapper) {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background: var(--va-background-primary) !important;
+  border: 1px solid var(--va-background-element) !important;
   border-radius: 12px !important;
 }
 
@@ -222,12 +222,12 @@ async function onLogin() {
 }
 
 :deep(.login-input .va-input__label) {
-  color: #1a1a1a !important;
+  color: var(--va-text-primary) !important;
   font-weight: 500 !important;
 }
 
 :deep(.login-input .va-input__content__input) {
-  color: #1a1a1a !important;
+  color: var(--va-text-primary) !important;
 }
 
 .login-button {
@@ -261,12 +261,12 @@ async function onLogin() {
   margin-top: 32px;
   text-align: center;
   padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--va-background-element);
 }
 
 .footer-text {
   font-size: 12px;
-  color: #999;
+  color: var(--va-text-secondary);
   margin: 0;
 }
 
@@ -295,40 +295,6 @@ async function onLogin() {
   
   .login-title {
     font-size: 20px;
-  }
-}
-
-/* Темная тема */
-@media (prefers-color-scheme: dark) {
-  .login-card {
-    background: rgba(26, 26, 26, 0.95) !important;
-    color: #ffffff !important;
-  }
-  
-  .logo-title,
-  .login-title {
-    color: #ffffff !important;
-  }
-  
-  .login-description {
-    color: #cccccc !important;
-  }
-  
-  :deep(.login-input .va-input-wrapper) {
-    background: rgba(42, 42, 42, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-  
-  :deep(.login-input .va-input__label) {
-    color: #ffffff !important;
-  }
-  
-  :deep(.login-input .va-input__content__input) {
-    color: #ffffff !important;
-  }
-  
-  .login-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 </style>
