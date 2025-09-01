@@ -6,44 +6,47 @@ import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
 
 export default [
-    // Перенаправление с корня на дашборд
-    {
-        path: '/',
-        redirect: '/dashboard'
-    },
-    
-    // Страница логина
+    // Страница логина (доступна всем)
     { 
         path: '/login', 
         name: 'login', 
         component: Login 
     },
     
-    // Основные страницы приложения
-    { 
-        path: '/dashboard', 
-        name: 'dashboard', 
-        component: Dashboard 
+    // Основные страницы приложения (требуют авторизации)
+    {
+        path: '/',
+        redirect: '/dashboard'
     },
-    { 
-        path: '/customers', 
-        name: 'customers', 
-        component: Customers 
+    {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: Dashboard,
+        meta: { requiresAuth: true }
     },
-    { 
-        path: '/analytics', 
-        name: 'analytics', 
-        component: Analytics 
+    {
+        path: '/customers',
+        name: 'customers',
+        component: Customers,
+        meta: { requiresAuth: true }
     },
-    { 
-        path: '/invoices', 
-        name: 'invoices', 
-        component: Invoices 
+    {
+        path: '/analytics',
+        name: 'analytics',
+        component: Analytics,
+        meta: { requiresAuth: true }
     },
-    { 
-        path: '/payments', 
-        name: 'payments', 
-        component: Payments 
+    {
+        path: '/invoices',
+        name: 'invoices',
+        component: Invoices,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/payments',
+        name: 'payments',
+        component: Payments,
+        meta: { requiresAuth: true }
     },
     
     // Catch-all route - перенаправляем на дашборд
