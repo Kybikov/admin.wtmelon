@@ -222,3 +222,4 @@ onMounted(async () => {
   letter-spacing: 0.5px;
 }
 </style>
+</template>
