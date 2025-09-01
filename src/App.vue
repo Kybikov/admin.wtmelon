@@ -7,8 +7,12 @@
     
     <!-- Все остальные страницы отображаются с сайдбаром -->
     <template v-else>
-      <va-layout :style="{ height: '100vh' }">
-        <template #topbar>
+      <va-layout style="height: 100vh;">
+        <template #left>
+          <Sidebar ref="sidebarRef" />
+        </template>
+
+        <template #top>
           <div class="topbar">
             <va-button preset="plain" round @click="toggleSidebar">
               <va-icon name="menu" />
@@ -21,13 +25,11 @@
           </div>
         </template>
 
-        <template #left>
-          <Sidebar ref="sidebarRef" />
+        <template #content>
+          <div class="main-content">
+            <router-view />
+          </div>
         </template>
-
-        <div class="main-content">
-          <router-view />
-        </div>
       </va-layout>
     </template>
   </div>
@@ -82,6 +84,7 @@ body {
   border-bottom: 1px solid var(--va-background-element);
   background-color: var(--va-background-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  height: 64px;
 }
 
 .topbar-title {
@@ -93,7 +96,7 @@ body {
 .main-content {
   padding: 24px;
   background-color: var(--va-background-primary);
-  min-height: calc(100vh - 64px);
+  height: 100%;
   overflow-y: auto;
 }
 </style>
