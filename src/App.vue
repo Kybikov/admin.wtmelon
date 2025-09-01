@@ -315,22 +315,6 @@ body {
   background-color: var(--va-background-primary);
 }
 
-/* Активные состояния навигации */
-:deep(.va-sidebar-item--active) {
-  background: linear-gradient(135deg, var(--va-primary), #ff6b6b) !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(var(--va-primary-rgb), 0.3);
-}
-
-:deep(.va-sidebar-item--active .va-icon) {
-  color: white !important;
-}
-
-:deep(.va-sidebar-item--active .va-sidebar-item-title) {
-  color: white !important;
-  font-weight: 600;
-}
-
 /* Скроллбар */
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;
