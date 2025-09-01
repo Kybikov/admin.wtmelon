@@ -9,7 +9,6 @@ import Orders from '@/views/Orders.vue'
 import Reports from '@/views/Reports.vue'
 import Settings from '@/views/Settings.vue'
 import Profile from '@/views/Profile.vue'
-import Stats from '@/views/Stats.vue'
 
 export default [
     // Страница логина (доступна всем)
@@ -82,12 +81,6 @@ export default [
         path: '/profile',
         name: 'profile',
         component: Profile,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/stats',
-        name: 'stats',
-        component: Stats,
         meta: { requiresAuth: true }
     },
     

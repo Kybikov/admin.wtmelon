@@ -48,91 +48,25 @@
 
             <!-- Футер сайдбара -->
             <div class="sidebar-footer">
-              <div class="theme-toggle">
+              <div class="footer-actions">
                 <va-button preset="plain" size="small" round @click="toggleTheme">
                   <va-icon name="brightness_6" size="16px" />
                 </va-button>
-              </div>
-              
-              <div class="user-profile">
-                <va-popover 
-                  v-model="showProfileMenu" 
-                  placement="top-start"
-                  :offset="[0, 8]"
-                  class="profile-popover"
-                >
-                  <template #anchor>
-                    <div class="profile-trigger" @click="showProfileMenu = !showProfileMenu">
-                      <va-avatar size="32px" color="primary">
-                        A
-                      </va-avatar>
-                      <div v-if="!sidebarMinimized" class="user-info">
-                        <div class="user-name">Админ WaterMelon</div>
-                        <div class="user-role">Admin</div>
-                      </div>
-                      <va-icon v-if="!sidebarMinimized" name="expand_less" size="16px" />
-                    </div>
-                  </template>
-                  
-                  <va-card class="profile-menu-card">
-                    <div class="profile-menu-header">
-                      <va-avatar size="40px" color="primary">
-                        A
-                      </va-avatar>
-                      <div class="profile-info">
-                        <div class="profile-name">Админ WaterMelon</div>
-                        <div class="profile-email">admin@watermelon.com</div>
-                      </div>
-                    </div>
-                    
-                    <div class="profile-menu-items">
-                      <div class="profile-menu-item" @click="goToProfile">
-                        <va-icon name="person" size="18px" />
-                        <span>Настройки профиля</span>
-                      </div>
-                      <div class="profile-menu-item" @click="goToStats">
-                        <va-icon name="analytics" size="18px" />
-                        <span>Моя статистика</span>
-                      </div>
-                      <div class="profile-menu-divider"></div>
-                      <div class="profile-menu-item profile-menu-item--danger" @click="logout">
-                        <va-icon name="logout" size="18px" />
-                        <span>Выйти</span>
-                      </div>
-                    </div>
-                  </va-card>
-                </va-popover>
-              </div>
-            </div>
-          </va-sidebar>
-        </template>
-
-        <template #content>
-          <div class="main-content">
-            <!-- Топбар -->
-            <div class="topbar">
-              <va-button
-                preset="plain"
-                size="small"
-                round
-                @click="sidebarMinimized = !sidebarMinimized"
-              >
-                <va-icon name="menu" />
-              </va-button>
-              
-              <va-spacer />
-              
-              <div class="topbar-actions">
+                
                 <va-button preset="plain" size="small" round @click="showNotifications = !showNotifications">
-                  <va-icon name="notifications" />
+                  <va-icon name="notifications" size="16px" />
                   <va-badge v-if="unreadNotifications > 0" :text="unreadNotifications" color="danger" />
+                </va-button>
+                
+                <va-button preset="plain" size="small" round @click="$router.push({ name: 'profile' })">
+                  <va-avatar size="24px" color="primary">A</va-avatar>
                 </va-button>
               </div>
               
               <!-- Панель уведомлений -->
               <va-popover 
                 v-model="showNotifications" 
-                placement="bottom-end"
+                placement="top-start"
                 :offset="[0, 8]"
                 class="notifications-popover"
               >
@@ -174,6 +108,24 @@
                 </va-card>
               </va-popover>
             </div>
+          </va-sidebar>
+        </template>
+
+        <template #content>
+          <div class="main-content">
+            <!-- Топбар -->
+            <div class="topbar">
+              <va-button
+                preset="plain"
+                size="small"
+                round
+                @click="sidebarMinimized = !sidebarMinimized"
+              >
+                <va-icon name="menu" />
+              </va-button>
+              
+              <va-spacer />
+            </div>
 
             <!-- Контент страниц -->
             <div class="page-content">
@@ -195,7 +147,6 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
-const showProfileMenu = ref(false)
 const showNotifications = ref(false)
 const { applyPreset, currentPresetName } = useColors()
 
@@ -246,16 +197,6 @@ function markAllAsRead() {
   showNotifications.value = false
 }
 
-function goToProfile() {
-  showProfileMenu.value = false
-  router.push({ name: 'profile' })
-}
-
-function goToStats() {
-  showProfileMenu.value = false
-  router.push({ name: 'stats' })
-}
-
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
   applyPreset(newTheme)
@@ -274,7 +215,6 @@ const navItems = [
 ]
 
 async function logout() {
-  showProfileMenu.value = false
   try { 
     await account.deleteSession('current') 
   } catch {}
@@ -456,134 +396,17 @@ body {
 .sidebar-footer {
   padding: 20px;
   border-top: 1px solid var(--va-background-element);
+}
+
+.footer-actions {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* Адаптация футера для свернутого состояния */
 :deep(.va-sidebar--minimized) .sidebar-footer {
   padding: 16px 8px;
-}
-
-:deep(.va-sidebar--minimized) .user-info {
-  display: none;
-}
-
-:deep(.va-sidebar--minimized) .logo-text {
-  display: none;
-}
-
-.theme-toggle {
-  display: flex;
-  justify-content: center;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profile-trigger {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-}
-
-.profile-trigger:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.user-info {
-  flex: 1;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--va-text-primary);
-  line-height: 1.2;
-}
-
-.user-role {
-  font-size: 12px;
-  color: var(--va-text-secondary);
-  opacity: 0.7;
-}
-
-/* Меню профиля */
-.profile-menu-card {
-  background: var(--va-background-secondary) !important;
-  border: 1px solid var(--va-background-element) !important;
-  border-radius: 12px !important;
-  padding: 0 !important;
-  min-width: 280px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-}
-
-.profile-menu-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--va-background-element);
-}
-
-.profile-info {
-  flex: 1;
-}
-
-.profile-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--va-text-primary);
-  margin-bottom: 2px;
-}
-
-.profile-email {
-  font-size: 12px;
-  color: var(--va-text-secondary);
-  opacity: 0.7;
-}
-
-.profile-menu-items {
-  padding: 8px 0;
-}
-
-.profile-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  color: var(--va-text-primary);
-}
-
-.profile-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.profile-menu-item--danger {
-  color: var(--va-danger);
-}
-
-.profile-menu-item--danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-.profile-menu-divider {
-  height: 1px;
-  background: var(--va-background-element);
-  margin: 8px 0;
 }
 
 /* Уведомления */
@@ -700,12 +523,6 @@ body {
   background-color: var(--va-background-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   min-height: 64px;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .page-content {
