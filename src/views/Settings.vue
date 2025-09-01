@@ -240,4 +240,3 @@ onMounted(async () => {
   color: var(--va-success);
 }
 </style>
-</template>
