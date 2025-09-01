@@ -7,41 +7,54 @@ import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
 
 export default [
+    // Страница логина - отдельно, без сайдбара
     { 
         path: '/login', 
         name: 'login', 
         component: Login 
     },
+    
+    // Основное приложение с сайдбаром
     {
         path: '/',
         component: Shell,
-        redirect: '/dashboard',
         children: [
+            // Перенаправление с корня на дашборд
+            {
+                path: '',
+                redirect: '/dashboard'
+            },
             { 
-                path: 'dashboard', 
+                path: '/dashboard', 
                 name: 'dashboard', 
                 component: Dashboard 
             },
             { 
-                path: 'customers', 
+                path: '/customers', 
                 name: 'customers', 
                 component: Customers 
             },
             { 
-                path: 'analytics', 
+                path: '/analytics', 
                 name: 'analytics', 
                 component: Analytics 
             },
             { 
-                path: 'invoices', 
+                path: '/invoices', 
                 name: 'invoices', 
                 component: Invoices 
             },
             { 
-                path: 'payments', 
+                path: '/payments', 
                 name: 'payments', 
                 component: Payments 
             },
         ],
     },
+    
+    // Catch-all route - перенаправляем на дашборд
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/dashboard'
+    }
 ]
