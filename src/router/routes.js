@@ -4,6 +4,10 @@ import Customers from '@/views/customers/Customers.vue'
 import Analytics from '@/views/Analytics.vue'
 import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
+import Products from '@/views/Products.vue'
+import Orders from '@/views/Orders.vue'
+import Reports from '@/views/Reports.vue'
+import Settings from '@/views/Settings.vue'
 
 export default [
     // Страница логина (доступна всем)
@@ -46,6 +50,30 @@ export default [
         path: '/payments',
         name: 'payments',
         component: Payments,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/products',
+        name: 'products',
+        component: Products,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/orders',
+        name: 'orders',
+        component: Orders,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/reports',
+        name: 'reports',
+        component: Reports,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: Settings,
         meta: { requiresAuth: true }
     },
     

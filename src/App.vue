@@ -122,9 +122,13 @@ function toggleTheme() {
 const navItems = [
   { name: 'dashboard', title: 'Дашборд', icon: 'dashboard' },
   { name: 'customers', title: 'Клиенты', icon: 'people' },
+  { name: 'products', title: 'Продукты', icon: 'inventory' },
+  { name: 'orders', title: 'Заказы', icon: 'shopping_cart' },
   { name: 'analytics', title: 'Аналитика', icon: 'analytics' },
-  { name: 'invoices', title: 'Подписки', icon: 'subscriptions' },
-  { name: 'payments', title: 'Настройки', icon: 'settings' },
+  { name: 'reports', title: 'Отчеты', icon: 'assessment' },
+  { name: 'invoices', title: 'Счета', icon: 'receipt' },
+  { name: 'payments', title: 'Платежи', icon: 'payment' },
+  { name: 'settings', title: 'Настройки', icon: 'settings' },
 ]
 
 async function logout() {
