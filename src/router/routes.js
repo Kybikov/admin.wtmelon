@@ -7,16 +7,41 @@ import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
 
 export default [
-    { path: '/login', name: 'login', component: Login },
+    { 
+        path: '/login', 
+        name: 'login', 
+        component: Login 
+    },
     {
         path: '/',
         component: Shell,
+        redirect: '/dashboard',
         children: [
-            { path: '', name: 'dashboard', component: Dashboard },
-            { path: 'customers', name: 'customers', component: Customers },
-            { path: 'analytics', name: 'analytics', component: Analytics },
-            { path: 'invoices', name: 'invoices', component: Invoices },
-            { path: 'payments', name: 'payments', component: Payments },
+            { 
+                path: 'dashboard', 
+                name: 'dashboard', 
+                component: Dashboard 
+            },
+            { 
+                path: 'customers', 
+                name: 'customers', 
+                component: Customers 
+            },
+            { 
+                path: 'analytics', 
+                name: 'analytics', 
+                component: Analytics 
+            },
+            { 
+                path: 'invoices', 
+                name: 'invoices', 
+                component: Invoices 
+            },
+            { 
+                path: 'payments', 
+                name: 'payments', 
+                component: Payments 
+            },
         ],
     },
 ]
