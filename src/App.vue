@@ -31,22 +31,6 @@
             </div>
 
             <!-- Навигация -->
-            <div class="sidebar-nav">
-              <va-sidebar-item
-                v-for="item in navItems"
-                :key="item.name"
-                :to="{ name: item.name }"
-                :active="$route.name === item.name"
-                class="nav-item"
-              >
-                <template #icon>
-                  <va-icon :name="item.icon" size="20px" />
-                </template>
-                <va-sidebar-item-content>
-                  <va-sidebar-item-title>{{ item.title }}</va-sidebar-item-title>
-                </va-sidebar-item-content>
-              </va-sidebar-item>
-            </div>
 
             <!-- Футер сайдбара -->
             <div class="sidebar-footer">
@@ -122,11 +106,11 @@ function toggleTheme() {
 }
 
 const navItems = [
-  { name: 'dashboard', title: 'Дашборд', icon: 'dashboard', to: { name: 'dashboard' } },
-  { name: 'customers', title: 'Клиенты', icon: 'people', to: { name: 'customers' } },
-  { name: 'analytics', title: 'Аналитика', icon: 'analytics', to: { name: 'analytics' } },
-  { name: 'invoices', title: 'Подписки', icon: 'subscriptions', to: { name: 'invoices' } },
-  { name: 'payments', title: 'Настройки', icon: 'settings', to: { name: 'payments' } },
+  { name: 'dashboard', title: 'Дашборд', icon: 'dashboard' },
+  { name: 'customers', title: 'Клиенты', icon: 'people' },
+  { name: 'analytics', title: 'Аналитика', icon: 'analytics' },
+  { name: 'invoices', title: 'Подписки', icon: 'subscriptions' },
+  { name: 'payments', title: 'Настройки', icon: 'settings' },
 ]
 
 async function logout() {
