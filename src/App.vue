@@ -39,7 +39,7 @@
                 :active="$route.name === item.name"
                 class="nav-item"
               >
-                <template v-slot:icon>
+                <template #icon>
                   <va-icon :name="item.icon" size="20px" />
                 </template>
                 <va-sidebar-item-content>
@@ -205,11 +205,48 @@ body {
   margin-bottom: 4px;
   border-radius: 12px;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .nav-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
   transform: translateX(2px);
+}
+
+/* Обеспечиваем правильное отображение иконок */
+:deep(.va-sidebar-item) {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.va-sidebar-item__icon) {
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:deep(.va-sidebar-item__content) {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Когда сайдбар свернут, скрываем текст но оставляем иконки */
+:deep(.va-sidebar--minimized .va-sidebar-item__content) {
+  display: none !important;
+}
+
+:deep(.va-sidebar--minimized .va-sidebar-item__icon) {
+  margin-right: 0 !important;
+}
+
+:deep(.va-sidebar--minimized .va-sidebar-item) {
+  justify-content: center !important;
+  padding: 12px !important;
 }
 
 .sidebar-footer {
@@ -218,6 +255,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Адаптация футера для свернутого состояния */
+:deep(.va-sidebar--minimized) .sidebar-footer {
+  padding: 16px 8px;
+}
+
+:deep(.va-sidebar--minimized) .user-info {
+  display: none;
+}
+
+:deep(.va-sidebar--minimized) .logo-text {
+  display: none;
 }
 
 .theme-toggle {
