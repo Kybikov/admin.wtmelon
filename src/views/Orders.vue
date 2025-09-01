@@ -183,4 +183,3 @@ onMounted(async () => {
   margin: 0;
 }
 </style>
-</template>
