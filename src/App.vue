@@ -51,8 +51,8 @@
             <!-- Футер сайдбара -->
             <div class="sidebar-footer">
               <div class="theme-toggle">
-                <va-button preset="plain" size="small" round>
-                  <va-icon name="light_mode" size="16px" />
+                <va-button preset="plain" size="small" round @click="toggleTheme">
+                  <va-icon name="brightness_6" size="16px" />
                 </va-button>
               </div>
               
@@ -113,6 +113,11 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
+
+function toggleTheme() {
+  // Функция переключения темы (можно добавить позже)
+  console.log('Toggle theme')
+}
 
 const navItems = [
   { name: 'dashboard', title: 'Дашборд', icon: 'dashboard', to: '/dashboard' },
