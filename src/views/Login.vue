@@ -367,4 +367,3 @@ async function onLogin() {
   }
 }
 </style>
-</template>
