@@ -8,7 +8,6 @@ import Products from '@/views/Products.vue'
 import Orders from '@/views/Orders.vue'
 import Reports from '@/views/Reports.vue'
 import Settings from '@/views/Settings.vue'
-import Profile from '@/views/Profile.vue'
 
 export default [
     // Страница логина (доступна всем)
@@ -75,12 +74,6 @@ export default [
         path: '/settings',
         name: 'settings',
         component: Settings,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/profile',
-        name: 'profile',
-        component: Profile,
         meta: { requiresAuth: true }
     },
     
