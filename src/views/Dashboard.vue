@@ -43,7 +43,7 @@
           </div>
           <div class="metric-info">
             <div class="metric-label">МЕСЯЧНАЯ ВЫРУЧКА</div>
-            <div class="metric-value">1 847 250,00 ₽</div>
+            <div class="metric-value">1 847 250,00 ₴</div>
             <div class="metric-change positive">+22.3% ЗА МЕСЯЦ</div>
           </div>
         </div>
@@ -83,7 +83,7 @@
               </div>
               <div class="activity-time">3 мин назад</div>
             </div>
-            <div class="activity-amount">499,00 ₽</div>
+            <div class="activity-amount">499,00 ₴</div>
           </div>
 
           <div class="activity-item">
@@ -96,7 +96,7 @@
               </div>
               <div class="activity-time">8 мин назад</div>
             </div>
-            <div class="activity-amount">499,00 ₽</div>
+            <div class="activity-amount">499,00 ₴</div>
           </div>
 
           <div class="activity-item">
@@ -122,7 +122,7 @@
               </div>
               <div class="activity-time">45 мин назад</div>
             </div>
-            <div class="activity-amount">399,00 ₽</div>
+            <div class="activity-amount">399,00 ₴</div>
           </div>
         </div>
       </va-card>
@@ -144,7 +144,7 @@
               </div>
             </div>
             <div class="service-revenue">
-              <div class="service-amount">622 300,00 ₽</div>
+              <div class="service-amount">622 300,00 ₴</div>
               <div class="service-change positive">+15.2%</div>
             </div>
           </div>
@@ -158,7 +158,7 @@
               </div>
             </div>
             <div class="service-revenue">
-              <div class="service-amount">445 600,00 ₽</div>
+              <div class="service-amount">445 600,00 ₴</div>
               <div class="service-change positive">+12.8%</div>
             </div>
           </div>
@@ -172,7 +172,7 @@
               </div>
             </div>
             <div class="service-revenue">
-              <div class="service-amount">261 600,00 ₽</div>
+              <div class="service-amount">261 600,00 ₴</div>
               <div class="service-change negative">-8.7%</div>
             </div>
           </div>
@@ -186,7 +186,7 @@
               </div>
             </div>
             <div class="service-revenue">
-              <div class="service-amount">193 500,00 ₽</div>
+              <div class="service-amount">193 500,00 ₴</div>
               <div class="service-change positive">+3.4%</div>
             </div>
           </div>
