@@ -48,21 +48,65 @@
 
             <!-- Футер сайдбара -->
             <div class="sidebar-footer">
-              <div class="theme-toggle">
+              <div class="footer-actions">
                 <va-button preset="plain" size="small" round @click="toggleTheme">
                   <va-icon name="brightness_6" size="16px" />
                 </va-button>
+                
+                <va-button preset="plain" size="small" round @click="showNotifications = !showNotifications">
+                  <va-icon name="notifications" size="16px" />
+                  <va-badge v-if="unreadNotifications > 0" :text="unreadNotifications" color="danger" />
+                </va-button>
+                
+                <va-button preset="plain" size="small" round @click="$router.push({ name: 'profile' })">
+                  <va-avatar size="24px" color="primary">A</va-avatar>
+                </va-button>
               </div>
               
-              <div class="user-profile">
-                <va-avatar size="32px" color="primary">
-                  A
-                </va-avatar>
-                <div v-if="!sidebarMinimized" class="user-info">
-                  <div class="user-name">Админ WaterMelon</div>
-                  <div class="user-role">Admin</div>
-                </div>
-              </div>
+              <!-- Панель уведомлений -->
+              <va-popover 
+                v-model="showNotifications" 
+                placement="top-start"
+                :offset="[0, 8]"
+                class="notifications-popover"
+              >
+                <template #anchor>
+                  <div></div>
+                </template>
+                
+                <va-card class="notifications-card">
+                  <div class="notifications-header">
+                    <h4>Уведомления</h4>
+                    <va-button preset="plain" size="small" @click="markAllAsRead">
+                      Отметить все
+                    </va-button>
+                  </div>
+                  
+                  <div class="notifications-list">
+                    <div 
+                      v-for="notification in notifications" 
+                      :key="notification.id"
+                      class="notification-item"
+                      :class="{ 'notification-item--unread': !notification.read }"
+                    >
+                      <div class="notification-icon" :class="notification.type">
+                        <va-icon :name="getNotificationIcon(notification.type)" size="16px" />
+                      </div>
+                      <div class="notification-content">
+                        <div class="notification-title">{{ notification.title }}</div>
+                        <div class="notification-text">{{ notification.text }}</div>
+                        <div class="notification-time">{{ notification.time }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="notifications-footer">
+                    <va-button preset="plain" size="small">
+                      Показать все
+                    </va-button>
+                  </div>
+                </va-card>
+              </va-popover>
             </div>
           </va-sidebar>
         </template>
@@ -81,15 +125,6 @@
               </va-button>
               
               <va-spacer />
-              
-              <div class="topbar-actions">
-                <va-button preset="plain" size="small" round>
-                  <va-icon name="notifications" />
-                </va-button>
-                <va-button preset="plain" size="small" round @click="logout">
-                  <va-icon name="logout" />
-                </va-button>
-              </div>
             </div>
 
             <!-- Контент страниц -->
@@ -104,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useColors } from 'vuestic-ui'
 import { account } from '@/appwrite/client'
@@ -112,7 +147,55 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
+const showNotifications = ref(false)
 const { applyPreset, currentPresetName } = useColors()
+
+// Уведомления
+const notifications = ref([
+  {
+    id: 1,
+    type: 'success',
+    title: 'Новый клиент',
+    text: 'Алексей Иванов зарегистрировался в системе',
+    time: '2 мин назад',
+    read: false
+  },
+  {
+    id: 2,
+    type: 'info',
+    title: 'Обновление системы',
+    text: 'Доступна новая версия CRM v2.0.1',
+    time: '1 час назад',
+    read: false
+  },
+  {
+    id: 3,
+    type: 'warning',
+    title: 'Проблема с платежом',
+    text: 'Не удалось списать оплату с карты клиента',
+    time: '3 часа назад',
+    read: true
+  }
+])
+
+const unreadNotifications = computed(() => 
+  notifications.value.filter(n => !n.read).length
+)
+
+function getNotificationIcon(type) {
+  const icons = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  }
+  return icons[type] || 'notifications'
+}
+
+function markAllAsRead() {
+  notifications.value.forEach(n => n.read = true)
+  showNotifications.value = false
+}
 
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
@@ -313,9 +396,12 @@ body {
 .sidebar-footer {
   padding: 20px;
   border-top: 1px solid var(--va-background-element);
+}
+
+.footer-actions {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* Адаптация футера для свернутого состояния */
@@ -323,43 +409,102 @@ body {
   padding: 16px 8px;
 }
 
-:deep(.va-sidebar--minimized) .user-info {
-  display: none;
+/* Уведомления */
+.notifications-card {
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  min-width: 360px;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
 }
 
-:deep(.va-sidebar--minimized) .logo-text {
-  display: none;
-}
-
-.theme-toggle {
-  display: flex;
-  justify-content: center;
-}
-
-.user-profile {
+.notifications-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--va-background-element);
 }
 
-.user-info {
+.notifications-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin: 0;
+}
+
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--va-background-element);
+  transition: all 0.2s ease;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.notification-item--unread {
+  background-color: rgba(255, 51, 102, 0.05);
+}
+
+.notification-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.notification-icon.success { background: #10b981; }
+.notification-icon.info { background: #3b82f6; }
+.notification-icon.warning { background: #f59e0b; }
+.notification-icon.error { background: #ef4444; }
+
+.notification-content {
   flex: 1;
 }
 
-.user-name {
+.notification-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--va-text-primary);
-  line-height: 1.2;
+  margin-bottom: 4px;
 }
 
-.user-role {
+.notification-text {
+  font-size: 13px;
+  color: var(--va-text-secondary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
   font-size: 12px;
   color: var(--va-text-secondary);
   opacity: 0.7;
+}
+
+.notifications-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--va-background-element);
+  text-align: center;
 }
 
 /* Основной контент */
@@ -378,12 +523,6 @@ body {
   background-color: var(--va-background-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   min-height: 64px;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .page-content {
