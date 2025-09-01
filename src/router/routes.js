@@ -12,12 +12,14 @@ export default [
         redirect: '/dashboard'
     },
     
-    // Все страницы отображаются с сайдбаром
+    // Страница логина
     { 
         path: '/login', 
         name: 'login', 
         component: Login 
     },
+    
+    // Основные страницы приложения
     { 
         path: '/dashboard', 
         name: 'dashboard', 
