@@ -1,12 +1,13 @@
 export const nav = [
-    { title: 'Дэшборд',  icon: 'dashboard',   to: { name: 'dashboard' } },
-    { title: 'Клиенты',  icon: 'groups',      to: { name: 'customers' } },
+    { title: 'Дэшборд',  icon: 'dashboard',     to: { name: 'dashboard' } },
+    { title: 'Клиенты',  icon: 'people',       to: { name: 'customers' } },
+    { title: 'Аналитика', icon: 'analytics',   to: { name: 'analytics' } },
     // группы и вложенные пункты — по желанию:
-    // {
-    //   title: 'Финансы', icon: 'receipt_long',
-    //   children: [
-    //     { title: 'Счета',    icon: 'description', to: { name: 'invoices' } },
-    //     { title: 'Платежи',  icon: 'credit_card', to: { name: 'payments' } },
-    //   ]
-    // }
+    {
+      title: 'Финансы', icon: 'account_balance_wallet',
+      children: [
+        { title: 'Счета',    icon: 'receipt', to: { name: 'invoices' } },
+        { title: 'Платежи',  icon: 'payment', to: { name: 'payments' } },
+      ]
+    }
 ]
