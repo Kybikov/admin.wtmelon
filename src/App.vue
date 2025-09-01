@@ -173,11 +173,12 @@ body {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, var(--va-primary), #ff6b6b);
+  background: linear-gradient(135deg, #4ade80, #22c55e);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
 }
 
 .logo-text {
