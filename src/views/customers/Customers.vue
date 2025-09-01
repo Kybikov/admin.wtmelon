@@ -439,6 +439,7 @@ async function createCustomer() {
   if (!createForm.name) return
   
   try {
+    console.log('Отправка данных клиента:', createForm)
     await createCustomerMutation({
       name: createForm.name,
       email: createForm.email || null,
@@ -452,6 +453,8 @@ async function createCustomer() {
     resetCreateForm()
   } catch (error) {
     console.error('Ошибка создания клиента:', error)
+    // Показываем ошибку пользователю
+    alert('Ошибка при создании клиента: ' + (error.message || 'Неизвестная ошибка'))
   }
 }
 

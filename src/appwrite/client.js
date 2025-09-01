@@ -10,6 +10,6 @@ export const db = new Databases(client)
 export const cfg = {
     dbId: import.meta.env.VITE_APPWRITE_DATABASE,
     customers: 'customer',
-    services: 'service', 
+    services: 'service',
     subscriptions: 'subscriptions',
 }

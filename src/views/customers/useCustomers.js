@@ -67,10 +67,16 @@ export function useServices() {
 export function useCreateCustomer() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: (payload) => db.createDocument(cfg.dbId, cfg.customers, ID.unique(), payload),
+        mutationFn: (payload) => {
+            console.log('Создание клиента:', payload)
+            return db.createDocument(cfg.dbId, cfg.customers, ID.unique(), payload)
+        },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: qkey })
         },
+        onError: (error) => {
+            console.error('Ошибка создания клиента:', error)
+        }
     })
 }
 
