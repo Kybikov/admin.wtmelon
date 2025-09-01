@@ -55,13 +55,53 @@
               </div>
               
               <div class="user-profile">
-                <va-avatar size="32px" color="primary">
-                  A
-                </va-avatar>
-                <div v-if="!sidebarMinimized" class="user-info">
-                  <div class="user-name">Админ WaterMelon</div>
-                  <div class="user-role">Admin</div>
-                </div>
+                <va-popover 
+                  v-model="showProfileMenu" 
+                  placement="top-start"
+                  :offset="[0, 8]"
+                  class="profile-popover"
+                >
+                  <template #anchor>
+                    <div class="profile-trigger" @click="showProfileMenu = !showProfileMenu">
+                      <va-avatar size="32px" color="primary">
+                        A
+                      </va-avatar>
+                      <div v-if="!sidebarMinimized" class="user-info">
+                        <div class="user-name">Админ WaterMelon</div>
+                        <div class="user-role">Admin</div>
+                      </div>
+                      <va-icon v-if="!sidebarMinimized" name="expand_less" size="16px" />
+                    </div>
+                  </template>
+                  
+                  <va-card class="profile-menu-card">
+                    <div class="profile-menu-header">
+                      <va-avatar size="40px" color="primary">
+                        A
+                      </va-avatar>
+                      <div class="profile-info">
+                        <div class="profile-name">Админ WaterMelon</div>
+                        <div class="profile-email">admin@watermelon.com</div>
+                      </div>
+                    </div>
+                    
+                    <div class="profile-menu-items">
+                      <div class="profile-menu-item" @click="goToProfile">
+                        <va-icon name="person" size="18px" />
+                        <span>Настройки профиля</span>
+                      </div>
+                      <div class="profile-menu-item" @click="goToStats">
+                        <va-icon name="analytics" size="18px" />
+                        <span>Моя статистика</span>
+                      </div>
+                      <div class="profile-menu-divider"></div>
+                      <div class="profile-menu-item profile-menu-item--danger" @click="logout">
+                        <va-icon name="logout" size="18px" />
+                        <span>Выйти</span>
+                      </div>
+                    </div>
+                  </va-card>
+                </va-popover>
               </div>
             </div>
           </va-sidebar>
@@ -83,13 +123,56 @@
               <va-spacer />
               
               <div class="topbar-actions">
-                <va-button preset="plain" size="small" round>
+                <va-button preset="plain" size="small" round @click="showNotifications = !showNotifications">
                   <va-icon name="notifications" />
-                </va-button>
-                <va-button preset="plain" size="small" round @click="logout">
-                  <va-icon name="logout" />
+                  <va-badge v-if="unreadNotifications > 0" :text="unreadNotifications" color="danger" />
                 </va-button>
               </div>
+              
+              <!-- Панель уведомлений -->
+              <va-popover 
+                v-model="showNotifications" 
+                placement="bottom-end"
+                :offset="[0, 8]"
+                class="notifications-popover"
+              >
+                <template #anchor>
+                  <div></div>
+                </template>
+                
+                <va-card class="notifications-card">
+                  <div class="notifications-header">
+                    <h4>Уведомления</h4>
+                    <va-button preset="plain" size="small" @click="markAllAsRead">
+                      Отметить все
+                    </va-button>
+                  </div>
+                  
+                  <div class="notifications-list">
+                    <div 
+                      v-for="notification in notifications" 
+                      :key="notification.id"
+                      class="notification-item"
+                      :class="{ 'notification-item--unread': !notification.read }"
+                    >
+                      <div class="notification-icon" :class="notification.type">
+                        <va-icon :name="getNotificationIcon(notification.type)" size="16px" />
+                      </div>
+                      <div class="notification-content">
+                        <div class="notification-title">{{ notification.title }}</div>
+                        <div class="notification-text">{{ notification.text }}</div>
+                        <div class="notification-time">{{ notification.time }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="notifications-footer">
+                    <va-button preset="plain" size="small">
+                      Показать все
+                    </va-button>
+                  </div>
+                </va-card>
+              </va-popover>
             </div>
 
             <!-- Контент страниц -->
@@ -104,7 +187,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useColors } from 'vuestic-ui'
 import { account } from '@/appwrite/client'
@@ -112,7 +195,66 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
+const showProfileMenu = ref(false)
+const showNotifications = ref(false)
 const { applyPreset, currentPresetName } = useColors()
+
+// Уведомления
+const notifications = ref([
+  {
+    id: 1,
+    type: 'success',
+    title: 'Новый клиент',
+    text: 'Алексей Иванов зарегистрировался в системе',
+    time: '2 мин назад',
+    read: false
+  },
+  {
+    id: 2,
+    type: 'info',
+    title: 'Обновление системы',
+    text: 'Доступна новая версия CRM v2.0.1',
+    time: '1 час назад',
+    read: false
+  },
+  {
+    id: 3,
+    type: 'warning',
+    title: 'Проблема с платежом',
+    text: 'Не удалось списать оплату с карты клиента',
+    time: '3 часа назад',
+    read: true
+  }
+])
+
+const unreadNotifications = computed(() => 
+  notifications.value.filter(n => !n.read).length
+)
+
+function getNotificationIcon(type) {
+  const icons = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  }
+  return icons[type] || 'notifications'
+}
+
+function markAllAsRead() {
+  notifications.value.forEach(n => n.read = true)
+  showNotifications.value = false
+}
+
+function goToProfile() {
+  showProfileMenu.value = false
+  router.push({ name: 'profile' })
+}
+
+function goToStats() {
+  showProfileMenu.value = false
+  router.push({ name: 'stats' })
+}
 
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
@@ -132,6 +274,7 @@ const navItems = [
 ]
 
 async function logout() {
+  showProfileMenu.value = false
   try { 
     await account.deleteSession('current') 
   } catch {}
@@ -339,10 +482,23 @@ body {
 .user-profile {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
   gap: 12px;
   padding: 12px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.profile-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .user-info {
@@ -360,6 +516,172 @@ body {
   font-size: 12px;
   color: var(--va-text-secondary);
   opacity: 0.7;
+}
+
+/* Меню профиля */
+.profile-menu-card {
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  min-width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.profile-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--va-background-element);
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin-bottom: 2px;
+}
+
+.profile-email {
+  font-size: 12px;
+  color: var(--va-text-secondary);
+  opacity: 0.7;
+}
+
+.profile-menu-items {
+  padding: 8px 0;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: var(--va-text-primary);
+}
+
+.profile-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.profile-menu-item--danger {
+  color: var(--va-danger);
+}
+
+.profile-menu-item--danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.profile-menu-divider {
+  height: 1px;
+  background: var(--va-background-element);
+  margin: 8px 0;
+}
+
+/* Уведомления */
+.notifications-card {
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  min-width: 360px;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--va-background-element);
+}
+
+.notifications-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin: 0;
+}
+
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--va-background-element);
+  transition: all 0.2s ease;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.notification-item--unread {
+  background-color: rgba(255, 51, 102, 0.05);
+}
+
+.notification-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.notification-icon.success { background: #10b981; }
+.notification-icon.info { background: #3b82f6; }
+.notification-icon.warning { background: #f59e0b; }
+.notification-icon.error { background: #ef4444; }
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin-bottom: 4px;
+}
+
+.notification-text {
+  font-size: 13px;
+  color: var(--va-text-secondary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: var(--va-text-secondary);
+  opacity: 0.7;
+}
+
+.notifications-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--va-background-element);
+  text-align: center;
 }
 
 /* Основной контент */
