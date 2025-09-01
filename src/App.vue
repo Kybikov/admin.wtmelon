@@ -1,19 +1,9 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-onMounted(() => {
-  // Перенаправляем на дашборд если находимся на корневой странице
-  if (router.currentRoute.value.path === '/') {
-    router.replace('/dashboard')
-  }
-})
+import Shell from '@/layout/Shell.vue'
 </script>
 
 <template>
-  <router-view />
+  <Shell />
 </template>
 
 <style>

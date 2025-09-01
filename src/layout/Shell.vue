@@ -7,7 +7,7 @@
         </va-button>
         <div class="topbar-title">WT Admin</div>
         <va-spacer />
-        <va-button preset="secondary" size="small" round @click="logout">
+        <va-button v-if="showLogout" preset="secondary" size="small" round @click="logout">
           <va-icon name="logout" class="mr-1" /> Выход
         </va-button>
       </div>
@@ -24,12 +24,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Sidebar from './Sidebar.vue'
 import { account } from '@/appwrite/client'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
+const route = useRoute()
 const sb = ref()
+
+// Показывать кнопку выхода только если не на странице логина
+const showLogout = computed(() => route.name !== 'login')
 
 function toggle() {
   // доступ к collapsed через ref на Sidebar
