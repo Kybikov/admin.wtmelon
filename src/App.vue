@@ -21,7 +21,7 @@
             <div class="sidebar-header">
               <div class="logo-section">
                 <div class="logo-icon">
-                  <va-icon name="watermelon" size="24px" color="primary" />
+                  <span style="font-size: 28px;">🍉</span>
                 </div>
                 <div v-if="!sidebarMinimized" class="logo-text">
                   <div class="logo-title">WaterMelon</div>
@@ -35,11 +35,11 @@
               <va-sidebar-item
                 v-for="item in navItems"
                 :key="item.name"
-                :to="item.to"
+                :to="{ name: item.name }"
                 :active="$route.name === item.name"
                 class="nav-item"
               >
-                <template #icon>
+                <template v-slot:icon>
                   <va-icon :name="item.icon" size="20px" />
                 </template>
                 <va-sidebar-item-content>
@@ -171,14 +171,9 @@ body {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #4ade80, #22c55e);
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
 }
 
 .logo-text {
