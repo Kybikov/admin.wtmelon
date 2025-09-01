@@ -6,6 +6,7 @@ import { createVuestic } from 'vuestic-ui'
 import 'vuestic-ui/css'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import routes from './router/routes'
+import '@/styles/theme.css'
 
 const app = createApp(App)
 app.use(createPinia())
@@ -13,7 +14,24 @@ app.use(createPinia())
 const router = createRouter({ history: createWebHistory(), routes })
 app.use(router)
 
-app.use(createVuestic())
+app.use(createVuestic({
+    colors: {
+        variables: {
+            primary: '#ff3366',
+            secondary: '#2f2f39',
+            success: '#1db954',
+            info: '#3b82f6',
+            danger: '#ef4444',
+            warning: '#f59e0b',
+            backgroundPrimary: '#0b0b0c',
+            backgroundSecondary: '#111113',
+        },
+    },
+    components: {
+        VaButton: { rounded: true },
+        VaDataTable: { striped: true, hoverable: true, density: 'compact' },
+    },
+}))
 app.use(VueQueryPlugin, { queryClientConfig: { defaultOptions: { queries: { refetchOnWindowFocus: false }}}})
 
 app.mount('#app')

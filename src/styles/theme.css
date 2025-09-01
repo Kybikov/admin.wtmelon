@@ -1,0 +1,13 @@
+/* высота и базовый фон */
+html, body, #app { height: 100%; margin: 0; }
+body { background: var(--va-background-primary); }
+
+/* лёгкие бордеры как в демо */
+.card-border { border: 1px solid var(--va-background-element); border-radius: 12px; }
+
+/* утилки без Tailwind */
+.p-4 { padding: 1rem; }
+.mt-3 { margin-top: .75rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: .5rem; }
