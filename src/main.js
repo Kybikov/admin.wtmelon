@@ -23,13 +23,17 @@ app.use(createVuestic({
             info: '#3b82f6',
             danger: '#ef4444',
             warning: '#f59e0b',
-            backgroundPrimary: '#0b0b0c',
-            backgroundSecondary: '#111113',
+            backgroundPrimary: '#1a1a1a',
+            backgroundSecondary: '#2a2a2a',
+            backgroundElement: '#333333',
+            textPrimary: '#ffffff',
+            textSecondary: '#a0a0a0',
         },
     },
     components: {
         VaButton: { rounded: true },
         VaDataTable: { striped: true, hoverable: true, density: 'compact' },
+        VaSidebar: { color: 'backgroundSecondary' },
     },
 }))
 app.use(VueQueryPlugin, { queryClientConfig: { defaultOptions: { queries: { refetchOnWindowFocus: false }}}})
