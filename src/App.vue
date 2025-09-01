@@ -31,6 +31,20 @@
             </div>
 
             <!-- Навигация -->
+            <div class="sidebar-nav">
+              <div 
+                v-for="item in navItems" 
+                :key="item.name"
+                class="nav-item"
+                :class="{ 'nav-item--active': $route.name === item.name }"
+                @click="$router.push({ name: item.name })"
+              >
+                <div class="nav-item-content">
+                  <span class="material-icons nav-icon">{{ item.icon }}</span>
+                  <span v-if="!sidebarMinimized" class="nav-text">{{ item.title }}</span>
+                </div>
+              </div>
+            </div>
 
             <!-- Футер сайдбара -->
             <div class="sidebar-footer">
@@ -140,6 +154,65 @@ body {
 }
 
 /* Сайдбар */
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  margin-bottom: 4px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(2px);
+}
+
+.nav-item--active {
+  background: linear-gradient(135deg, var(--va-primary), #e91e63) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(255, 51, 102, 0.3);
+}
+
+.nav-item-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.nav-icon {
+  font-size: 20px !important;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Когда сайдбар свернут */
+.va-sidebar--minimized .nav-item-content {
+  justify-content: center;
+  padding: 12px;
+}
+
+.va-sidebar--minimized .nav-text {
+  display: none;
+}
+
 .app-sidebar {
   border-right: 1px solid var(--va-background-element);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
