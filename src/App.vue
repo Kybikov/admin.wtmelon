@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useColors } from 'vuestic-ui'
 import { account } from '@/appwrite/client'
@@ -114,34 +114,9 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
-const { setGlobalConfig } = useColors()
+const { applyPreset, currentPresetName } = useColors()
 
-onMounted(() => {
-  // Устанавливаем темную тему при загрузке
-  setGlobalConfig({
-    threshold: 130,
-    presets: {
-      dark: {
-        primary: '#ff3366',
-        secondary: '#6c757d',
-        success: '#1db954',
-        info: '#3b82f6',
-        danger: '#ef4444',
-        warning: '#f59e0b',
-        backgroundPrimary: '#1a1a1a',
-        backgroundSecondary: '#2a2a2a',
-        backgroundElement: '#333333',
-        backgroundBorder: '#404040',
-        textPrimary: '#ffffff',
-        textInverted: '#000000',
-        shadow: 'rgba(0, 0, 0, 0.12)',
-        focus: '#ff3366',
-      }
-    }
-  })
-})
 function toggleTheme() {
-  const { applyPreset, currentPresetName } = useColors()
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
   applyPreset(newTheme)
 }
