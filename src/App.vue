@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <va-config-provider :colors-config="{ presets: { dark: true } }">
     <!-- Страница логина без сайдбара -->
     <template v-if="$route.name === 'login'">
       <router-view />
@@ -102,21 +102,48 @@
         </template>
       </va-layout>
     </template>
-  </div>
+  </va-config-provider>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useColors } from 'vuestic-ui'
 import { account } from '@/appwrite/client'
 
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
+const { setGlobalConfig } = useColors()
 
+onMounted(() => {
+  // Устанавливаем темную тему при загрузке
+  setGlobalConfig({
+    threshold: 130,
+    presets: {
+      dark: {
+        primary: '#ff3366',
+        secondary: '#6c757d',
+        success: '#1db954',
+        info: '#3b82f6',
+        danger: '#ef4444',
+        warning: '#f59e0b',
+        backgroundPrimary: '#1a1a1a',
+        backgroundSecondary: '#2a2a2a',
+        backgroundElement: '#333333',
+        backgroundBorder: '#404040',
+        textPrimary: '#ffffff',
+        textInverted: '#000000',
+        shadow: 'rgba(0, 0, 0, 0.12)',
+        focus: '#ff3366',
+      }
+    }
+  })
+})
 function toggleTheme() {
-  // Функция переключения темы (можно добавить позже)
-  console.log('Toggle theme')
+  const { applyPreset, currentPresetName } = useColors()
+  const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
+  applyPreset(newTheme)
 }
 
 const navItems = [

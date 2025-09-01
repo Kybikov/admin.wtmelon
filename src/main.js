@@ -15,25 +15,54 @@ const router = createRouter({ history: createWebHistory(), routes })
 app.use(router)
 
 app.use(createVuestic({
-    colors: {
-        variables: {
-            primary: '#ff3366',
-            secondary: '#2f2f39',
-            success: '#1db954',
-            info: '#3b82f6',
-            danger: '#ef4444',
-            warning: '#f59e0b',
-            backgroundPrimary: '#1a1a1a',
-            backgroundSecondary: '#2a2a2a',
-            backgroundElement: '#333333',
-            textPrimary: '#ffffff',
-            textSecondary: '#a0a0a0',
+    config: {
+        colors: {
+            variables: {
+                primary: '#ff3366',
+                secondary: '#6c757d',
+                success: '#1db954',
+                info: '#3b82f6',
+                danger: '#ef4444',
+                warning: '#f59e0b',
+            },
+        },
+        themes: {
+            dark: {
+                colors: {
+                    primary: '#ff3366',
+                    secondary: '#6c757d',
+                    success: '#1db954',
+                    info: '#3b82f6',
+                    danger: '#ef4444',
+                    warning: '#f59e0b',
+                    backgroundPrimary: '#1a1a1a',
+                    backgroundSecondary: '#2a2a2a',
+                    backgroundElement: '#333333',
+                    backgroundBorder: '#404040',
+                    textPrimary: '#ffffff',
+                    textInverted: '#000000',
+                    shadow: 'rgba(0, 0, 0, 0.12)',
+                    focus: '#ff3366',
+                },
+            },
         },
     },
     components: {
-        VaButton: { rounded: true },
-        VaDataTable: { striped: true, hoverable: true, density: 'compact' },
-        VaSidebar: { color: 'backgroundSecondary' },
+        VaButton: { 
+            rounded: true,
+        },
+        VaCard: {
+            color: 'backgroundSecondary',
+            textColor: 'textPrimary',
+        },
+        VaSidebar: { 
+            color: 'backgroundSecondary',
+        },
+        VaDataTable: { 
+            striped: true, 
+            hoverable: true, 
+            density: 'compact',
+        },
     },
 }))
 app.use(VueQueryPlugin, { queryClientConfig: { defaultOptions: { queries: { refetchOnWindowFocus: false }}}})
