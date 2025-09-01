@@ -2,8 +2,8 @@
   <div class="login-page-container">
     <!-- Кнопка смены темы -->
     <div class="theme-toggle-corner">
-      <va-button preset="plain" size="small" round @click="toggleTheme">
-        <va-icon :name="currentPresetName === 'dark' ? 'light_mode' : 'dark_mode'" size="20px" />
+      <va-button preset="plain" size="large" round @click="toggleTheme">
+        <va-icon :name="currentPresetName === 'dark' ? 'light_mode' : 'dark_mode'" size="24px" />
       </va-button>
     </div>
 
@@ -293,15 +293,25 @@ async function onLogin() {
 }
 
 :deep(.theme-toggle-corner .va-button) {
+  width: 56px !important;
+  height: 56px !important;
   background: var(--va-background-secondary) !important;
   border: 1px solid var(--va-background-element) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
   transition: all 0.2s ease !important;
+  backdrop-filter: blur(10px) !important;
 }
 
 :deep(.theme-toggle-corner .va-button:hover) {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
+  border-color: var(--va-primary) !important;
+}
+
+:deep(.theme-toggle-corner .va-button .va-icon) {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 
 /* Адаптивность */
