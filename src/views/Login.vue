@@ -1,9 +1,5 @@
 <template>
   <div class="login-page-container">
-    <!-- Фоновое изображение и оверлей -->
-    <div class="login-background"></div>
-    <div class="login-background-overlay"></div>
-    
     <!-- Контент страницы входа -->
     <div class="login-content">
       <va-card class="login-card">
@@ -128,39 +124,8 @@ async function onLogin() {
   overflow: hidden;
 }
 
-.login-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-size: cover;
-  background-position: center;
-  z-index: 1;
-}
-
-.login-background::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop') center/cover;
-  opacity: 0.3;
-  z-index: -1;
-}
-
-.login-background-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 2;
+.login-page-container {
+  background: var(--va-background-primary);
 }
 
 .login-content {
