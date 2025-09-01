@@ -7,7 +7,7 @@ import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
 
 export default [
-    { path: '/login', name: 'login', component: Login, meta: { public: true } },
+    { path: '/login', name: 'login', component: Login },
     {
         path: '/',
         component: Shell,
