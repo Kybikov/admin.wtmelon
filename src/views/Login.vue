@@ -1,5 +1,12 @@
 <template>
   <div class="login-page-container">
+    <!-- Кнопка смены темы -->
+    <div class="theme-toggle-corner">
+      <va-button preset="plain" size="small" round @click="toggleTheme">
+        <va-icon :name="currentPresetName === 'dark' ? 'light_mode' : 'dark_mode'" size="20px" />
+      </va-button>
+    </div>
+
     <!-- Контент страницы входа -->
     <div class="login-content">
       <va-card class="login-card">
@@ -77,12 +84,19 @@
 import { ref, onMounted } from 'vue'
 import { account } from '@/appwrite/client'
 import { useRouter } from 'vue-router'
+import { useColors } from 'vuestic-ui'
 
 const router = useRouter()
+const { applyPreset, currentPresetName } = useColors()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const err = ref('')
+
+function toggleTheme() {
+  const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
+  applyPreset(newTheme)
+}
 
 onMounted(async () => { 
   try { 
@@ -270,6 +284,26 @@ async function onLogin() {
   margin: 0;
 }
 
+/* Кнопка смены темы */
+.theme-toggle-corner {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 10;
+}
+
+:deep(.theme-toggle-corner .va-button) {
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+:deep(.theme-toggle-corner .va-button:hover) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Адаптивность */
 @media (max-width: 480px) {
   .login-content {
@@ -295,6 +329,11 @@ async function onLogin() {
   
   .login-title {
     font-size: 20px;
+  }
+  
+  .theme-toggle-corner {
+    bottom: 16px;
+    left: 16px;
   }
 }
 </style>
