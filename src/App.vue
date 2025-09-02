@@ -123,6 +123,9 @@ const authLoading = ref(true)
 const isAuthenticated = ref(false)
 const { applyPreset, currentPresetName } = useColors()
 
+// Promise для ожидания завершения проверки авторизации
+let authCheckPromise = null
+
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
   applyPreset(newTheme)
@@ -130,19 +133,22 @@ function toggleTheme() {
 
 // Проверяем авторизацию при загрузке
 onMounted(async () => {
-  try {
-    await account.get()
-    isAuthenticated.value = true
-    // Если находимся на странице логина, перенаправляем на дашборд
-    if (router.currentRoute.value.name === 'login') {
-      router.replace({ name: 'dashboard' })
+  authCheckPromise = new Promise(async (resolve) => {
+    try {
+      await account.get()
+      isAuthenticated.value = true
+      // Если находимся на странице логина, перенаправляем на дашборд
+      if (router.currentRoute.value.name === 'login') {
+        router.replace({ name: 'dashboard' })
+      }
+    } catch {
+      isAuthenticated.value = false
+      router.replace({ name: 'login' })
+    } finally {
+      authLoading.value = false
+      resolve()
     }
-  } catch {
-    isAuthenticated.value = false
-    router.replace({ name: 'login' })
-  } finally {
-    authLoading.value = false
-  }
+  })
 })
 
 const navItems = [
@@ -167,24 +173,9 @@ async function logout() {
 
 // Следим за изменениями роута для проверки авторизации
 router.beforeEach(async (to, from, next) => {
-  // Если загружаемся, ждем проверки авторизации
+  // Ждем завершения проверки авторизации
   if (authLoading.value) {
-    // Ждем завершения проверки авторизации
-    const checkAuth = () => {
-      if (!authLoading.value) {
-        if (to.name === 'login') {
-          next()
-        } else if (isAuthenticated.value) {
-          next()
-        } else {
-          next({ name: 'login' })
-        }
-      } else {
-        setTimeout(checkAuth, 50)
-      }
-    }
-    checkAuth()
-    return
+    await authCheckPromise
   }
   
   // Если идем на логин и уже авторизованы
@@ -194,7 +185,7 @@ router.beforeEach(async (to, from, next) => {
   }
   
   // Если идем на защищенную страницу без авторизации
-  if (to.meta.requiresAuth && !isAuthenticated.value) {
+  if (to.name !== 'login' && !isAuthenticated.value) {
     next({ name: 'login' })
     return
   }
