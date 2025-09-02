@@ -1,7 +1,13 @@
 <template>
   <va-config-provider :colors-config="{ presets: { dark: true } }">
-    <!-- Страница логина без сайдбара -->
-    <template v-if="$route.name === 'login'">
+    <!-- Показываем загрузку пока проверяем авторизацию -->
+    <div v-if="authLoading" class="auth-loading">
+      <va-progress-circle indeterminate size="large" />
+      <p>Проверка авторизации...</p>
+    </div>
+    
+    <!-- Страница логина -->
+    <template v-else-if="!isAuthenticated">
       <router-view />
     </template>
     
@@ -105,6 +111,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useColors } from 'vuestic-ui'
 import { account } from '@/appwrite/client'
@@ -112,12 +119,31 @@ import { account } from '@/appwrite/client'
 const router = useRouter()
 const sidebarVisible = ref(true)
 const sidebarMinimized = ref(false)
+const authLoading = ref(true)
+const isAuthenticated = ref(false)
 const { applyPreset, currentPresetName } = useColors()
 
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
   applyPreset(newTheme)
 }
+
+// Проверяем авторизацию при загрузке
+onMounted(async () => {
+  try {
+    await account.get()
+    isAuthenticated.value = true
+    // Если находимся на странице логина, перенаправляем на дашборд
+    if (router.currentRoute.value.name === 'login') {
+      router.replace({ name: 'dashboard' })
+    }
+  } catch {
+    isAuthenticated.value = false
+    router.replace({ name: 'login' })
+  } finally {
+    authLoading.value = false
+  }
+})
 
 const navItems = [
   { name: 'dashboard', title: 'Дашборд', icon: 'dashboard' },
@@ -133,9 +159,48 @@ const navItems = [
 
 async function logout() {
   try { 
-    await account.deleteSession('current') 
+    await account.deleteSession('current')
+    isAuthenticated.value = false
+    router.replace({ name: 'login' })
   } catch {}
-  router.replace({ name: 'login' })
+}
+
+// Следим за изменениями роута для проверки авторизации
+router.beforeEach(async (to, from, next) => {
+  // Если загружаемся, ждем проверки авторизации
+  if (authLoading.value) {
+    // Ждем завершения проверки авторизации
+    const checkAuth = () => {
+      if (!authLoading.value) {
+        if (to.name === 'login') {
+          next()
+        } else if (isAuthenticated.value) {
+          next()
+        } else {
+          next({ name: 'login' })
+        }
+      } else {
+        setTimeout(checkAuth, 50)
+      }
+    }
+    checkAuth()
+    return
+  }
+  
+  // Если идем на логин и уже авторизованы
+  if (to.name === 'login' && isAuthenticated.value) {
+    next({ name: 'dashboard' })
+    return
+  }
+  
+  // Если идем на защищенную страницу без авторизации
+  if (to.meta.requiresAuth && !isAuthenticated.value) {
+    next({ name: 'login' })
+    return
+  }
+  
+  next()
+})
 }
 </script>
 
@@ -408,5 +473,20 @@ body {
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
   background: var(--va-text-secondary);
+}
+
+/* Загрузка авторизации */
+.auth-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--va-background-primary);
+  gap: 16px;
 }
 </style>

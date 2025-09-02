@@ -101,7 +101,7 @@ function toggleTheme() {
 onMounted(async () => { 
   try { 
     await account.get()
-    router.replace('/') 
+    router.replace({ name: 'dashboard' }) 
   } catch {} 
 })
 
@@ -116,7 +116,7 @@ async function onLogin() {
   
   try { 
     await account.createEmailPasswordSession(email.value, password.value)
-    router.replace('/') 
+    router.replace({ name: 'dashboard' }) 
   } catch(e) { 
     err.value = e?.message || 'Ошибка входа. Проверьте данные и попробуйте снова.' 
   } finally { 
