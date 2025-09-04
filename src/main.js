@@ -7,11 +7,40 @@ import 'vuestic-ui/css'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import routes from './router/routes'
 import '@/styles/theme.css'
+import { account } from '@/appwrite/client'
 
 const app = createApp(App)
 app.use(createPinia())
 
 const router = createRouter({ history: createWebHistory(), routes })
+
+// Navigation guard для проверки авторизации
+router.beforeEach(async (to, from, next) => {
+    // Если идем на страницу логина, пропускаем
+    if (to.name === 'login') {
+        // Если уже авторизован, перенаправляем на дашборд
+        try {
+            await account.get()
+            next({ name: 'dashboard' })
+        } catch {
+            next()
+        }
+        return
+    }
+
+    // Для всех остальных страниц проверяем авторизацию
+    if (to.meta.requiresAuth) {
+        try {
+            await account.get()
+            next()
+        } catch {
+            next({ name: 'login' })
+        }
+    } else {
+        next()
+    }
+})
+
 app.use(router)
 
 app.use(createVuestic({

@@ -32,20 +32,18 @@
 
             <!-- Навигация -->
             <div class="sidebar-nav">
-              <va-sidebar-item
-                v-for="item in navItems"
+              <div 
+                v-for="item in navItems" 
                 :key="item.name"
-                :to="{ name: item.name }"
-                :active="$route.name === item.name"
                 class="nav-item"
+                :class="{ 'nav-item--active': $route.name === item.name }"
+                @click="$router.push({ name: item.name })"
               >
-                <template v-slot:icon>
-                  <va-icon :name="item.icon" size="20px" />
-                </template>
-                <va-sidebar-item-content>
-                  <va-sidebar-item-title>{{ item.title }}</va-sidebar-item-title>
-                </va-sidebar-item-content>
-              </va-sidebar-item>
+                <div class="nav-item-content">
+                  <span class="material-icons nav-icon">{{ item.icon }}</span>
+                  <span v-if="!sidebarMinimized" class="nav-text">{{ item.title }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Футер сайдбара -->
@@ -122,11 +120,15 @@ function toggleTheme() {
 }
 
 const navItems = [
-  { name: 'dashboard', title: 'Дашборд', icon: 'dashboard', to: { name: 'dashboard' } },
-  { name: 'customers', title: 'Клиенты', icon: 'people', to: { name: 'customers' } },
-  { name: 'analytics', title: 'Аналитика', icon: 'analytics', to: { name: 'analytics' } },
-  { name: 'invoices', title: 'Подписки', icon: 'subscriptions', to: { name: 'invoices' } },
-  { name: 'payments', title: 'Настройки', icon: 'settings', to: { name: 'payments' } },
+  { name: 'dashboard', title: 'Дашборд', icon: 'dashboard' },
+  { name: 'customers', title: 'Клиенты', icon: 'people' },
+  { name: 'products', title: 'Продукты', icon: 'inventory' },
+  { name: 'orders', title: 'Заказы', icon: 'shopping_cart' },
+  { name: 'analytics', title: 'Аналитика', icon: 'analytics' },
+  { name: 'reports', title: 'Отчеты', icon: 'assessment' },
+  { name: 'invoices', title: 'Счета', icon: 'receipt' },
+  { name: 'payments', title: 'Платежи', icon: 'payment' },
+  { name: 'settings', title: 'Настройки', icon: 'settings' },
 ]
 
 async function logout() {
@@ -156,6 +158,65 @@ body {
 }
 
 /* Сайдбар */
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  margin-bottom: 4px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateX(2px);
+}
+
+.nav-item--active {
+  background: linear-gradient(135deg, var(--va-primary), #e91e63) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(255, 51, 102, 0.3);
+}
+
+.nav-item-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.nav-icon {
+  font-size: 20px !important;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Когда сайдбар свернут */
+.va-sidebar--minimized .nav-item-content {
+  justify-content: center;
+  padding: 12px;
+}
+
+.va-sidebar--minimized .nav-text {
+  display: none;
+}
+
 .app-sidebar {
   border-right: 1px solid var(--va-background-element);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
@@ -205,11 +266,48 @@ body {
   margin-bottom: 4px;
   border-radius: 12px;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .nav-item:hover {
   background-color: rgba(255, 255, 255, 0.05);
   transform: translateX(2px);
+}
+
+/* Обеспечиваем правильное отображение иконок */
+:deep(.va-sidebar-item) {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.va-sidebar-item__icon) {
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+:deep(.va-sidebar-item__content) {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Когда сайдбар свернут, скрываем текст но оставляем иконки */
+:deep(.va-sidebar--minimized .va-sidebar-item__content) {
+  display: none !important;
+}
+
+:deep(.va-sidebar--minimized .va-sidebar-item__icon) {
+  margin-right: 0 !important;
+}
+
+:deep(.va-sidebar--minimized .va-sidebar-item) {
+  justify-content: center !important;
+  padding: 12px !important;
 }
 
 .sidebar-footer {
@@ -218,6 +316,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Адаптация футера для свернутого состояния */
+:deep(.va-sidebar--minimized) .sidebar-footer {
+  padding: 16px 8px;
+}
+
+:deep(.va-sidebar--minimized) .user-info {
+  display: none;
+}
+
+:deep(.va-sidebar--minimized) .logo-text {
+  display: none;
 }
 
 .theme-toggle {
@@ -279,22 +390,6 @@ body {
   flex: 1;
   overflow-y: auto;
   background-color: var(--va-background-primary);
-}
-
-/* Активные состояния навигации */
-:deep(.va-sidebar-item--active) {
-  background: linear-gradient(135deg, var(--va-primary), #ff6b6b) !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(var(--va-primary-rgb), 0.3);
-}
-
-:deep(.va-sidebar-item--active .va-icon) {
-  color: white !important;
-}
-
-:deep(.va-sidebar-item--active .va-sidebar-item-title) {
-  color: white !important;
-  font-weight: 600;
 }
 
 /* Скроллбар */
