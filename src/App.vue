@@ -1,6 +1,7 @@
 <template>
   <va-config-provider :colors-config="{ presets: { dark: true } }">
     <!-- Показываем загрузку пока проверяем авторизацию -->
+    <!-- Показываем загрузку пока проверяем авторизацию -->
     <div v-if="authLoading" class="auth-loading">
       <va-progress-circle indeterminate size="large" />
       <p>Проверка авторизации...</p>
