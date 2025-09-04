@@ -1,12 +1,82 @@
 <template>
-  <div class="flex items-center justify-center" style="height:100vh">
-    <va-card style="min-width:320px">
-      <h3 class="mb-2">Вход</h3>
-      <va-input v-model="email" type="email" label="Email" class="mb-2" />
-      <va-input v-model="password" type="password" label="Пароль" class="mb-3" />
-      <va-button :loading="loading" @click="onLogin">Войти</va-button>
-      <va-alert v-if="err" color="danger" class="mt-2">{{ err }}</va-alert>
-    </va-card>
+  <div class="login-page-container">
+    <!-- Кнопка смены темы -->
+    <div class="theme-toggle-corner">
+      <va-button preset="plain" size="large" round @click="toggleTheme">
+        <va-icon :name="currentPresetName === 'dark' ? 'light_mode' : 'dark_mode'" size="24px" />
+      </va-button>
+    </div>
+
+    <!-- Контент страницы входа -->
+    <div class="login-content">
+      <va-card class="login-card">
+        <!-- Логотип и заголовок -->
+        <div class="login-header">
+          <div class="login-logo">
+            <div class="logo-icon">🍉</div>
+            <div class="logo-text">
+              <h1 class="logo-title">WaterMelon</h1>
+              <p class="logo-subtitle">CRM System</p>
+            </div>
+          </div>
+          <h2 class="login-title">Добро пожаловать</h2>
+          <p class="login-description">Войдите в свой аккаунт для продолжения</p>
+        </div>
+
+        <!-- Форма входа -->
+        <div class="login-form">
+          <va-input 
+            v-model="email" 
+            type="email" 
+            label="Email адрес" 
+            class="login-input"
+            :rules="[value => !!value || 'Email обязателен']"
+          >
+            <template #prependInner>
+              <va-icon name="email" size="18px" />
+            </template>
+          </va-input>
+          
+          <va-input 
+            v-model="password" 
+            type="password" 
+            label="Пароль" 
+            class="login-input"
+            :rules="[value => !!value || 'Пароль обязателен']"
+          >
+            <template #prependInner>
+              <va-icon name="lock" size="18px" />
+            </template>
+          </va-input>
+
+          <va-button 
+            :loading="loading" 
+            @click="onLogin"
+            class="login-button"
+            size="large"
+          >
+            Войти в систему
+          </va-button>
+
+          <va-alert 
+            v-if="err" 
+            color="danger" 
+            class="login-error"
+            closeable
+            @close="err = ''"
+          >
+            {{ err }}
+          </va-alert>
+        </div>
+
+        <!-- Футер -->
+        <div class="login-footer">
+          <p class="footer-text">
+            © 2025 WaterMelon CRM. Все права защищены.
+          </p>
+        </div>
+      </va-card>
+    </div>
   </div>
 </template>
 
@@ -14,15 +84,312 @@
 import { ref, onMounted } from 'vue'
 import { account } from '@/appwrite/client'
 import { useRouter } from 'vue-router'
+import { useColors } from 'vuestic-ui'
+
 const router = useRouter()
-const email = ref(''); const password = ref(''); const loading = ref(false); const err = ref('')
+const { applyPreset, currentPresetName } = useColors()
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
+const err = ref('')
 
-onMounted(async () => { try { await account.get(); router.replace('/') } catch {} })
+function toggleTheme() {
+  const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
+  applyPreset(newTheme)
+}
 
-async function onLogin () {
-  err.value=''; loading.value=true
-  try { await account.createEmailPasswordSession(email.value, password.value); router.replace('/') }
-  catch(e){ err.value = e?.message || 'Ошибка входа' }
-  finally { loading.value=false }
+onMounted(async () => { 
+  try { 
+    await account.get()
+    router.replace({ name: 'dashboard' }) 
+  } catch {} 
+})
+
+async function onLogin() {
+  if (!email.value || !password.value) {
+    err.value = 'Пожалуйста, заполните все поля'
+    return
+  }
+
+  err.value = ''
+  loading.value = true
+  
+  try { 
+    // Проверяем, есть ли уже активная сессия
+    try {
+      await account.get()
+      // Если сессия активна, перенаправляем на дашборд
+      router.replace({ name: 'dashboard' })
+      return
+    } catch {
+      // Сессии нет, продолжаем логин
+    }
+    
+    await account.createEmailPasswordSession(email.value, password.value)
+    router.replace({ name: 'dashboard' }) 
+  } catch(e) { 
+    // Улучшенная обработка ошибок
+    if (e?.message?.includes('session is active')) {
+      err.value = 'Вы уже авторизованы. Перенаправляем на дашборд...'
+      setTimeout(() => {
+        router.replace({ name: 'dashboard' })
+      }, 1500)
+    } else if (e?.message?.includes('Invalid credentials')) {
+      err.value = 'Неверный email или пароль. Проверьте данные и попробуйте снова.'
+    } else if (e?.message?.includes('User not found')) {
+      err.value = 'Пользователь с таким email не найден.'
+    } else {
+      err.value = e?.message || 'Ошибка входа. Проверьте данные и попробуйте снова.'
+    }
+  } finally { 
+    loading.value = false 
+  }
 }
 </script>
+
+<style scoped>
+.login-page-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.login-page-container {
+  background: var(--va-background-primary);
+}
+
+.login-content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--va-background-secondary) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 24px !important;
+  padding: 40px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  color: var(--va-text-primary) !important;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.logo-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.logo-text {
+  text-align: left;
+}
+
+.logo-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--va-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.logo-subtitle {
+  font-size: 14px;
+  color: var(--va-text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.login-description {
+  font-size: 16px;
+  color: var(--va-text-secondary);
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-input {
+  --va-input-wrapper-border-radius: 12px;
+}
+
+:deep(.login-input .va-input-wrapper) {
+  background: var(--va-background-primary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 12px !important;
+}
+
+:deep(.login-input .va-input-wrapper:hover) {
+  border-color: var(--va-primary) !important;
+}
+
+:deep(.login-input .va-input-wrapper--focused) {
+  border-color: var(--va-primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 51, 102, 0.1) !important;
+}
+
+:deep(.login-input .va-input__label) {
+  color: var(--va-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+:deep(.login-input .va-input__content__input) {
+  color: var(--va-text-primary) !important;
+}
+
+.login-button {
+  width: 100% !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  background: linear-gradient(135deg, var(--va-primary), #e91e63) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(255, 51, 102, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.login-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 51, 102, 0.4) !important;
+}
+
+.login-button:active {
+  transform: translateY(0) !important;
+}
+
+.login-error {
+  border-radius: 12px !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+:deep(.login-error .va-alert__content) {
+  color: #ffffff !important;
+}
+
+:deep(.login-error .va-alert__icon) {
+  color: #ffffff !important;
+}
+
+:deep(.login-error .va-alert__close) {
+  color: #ffffff !important;
+  opacity: 0.8 !important;
+}
+
+:deep(.login-error .va-alert__close:hover) {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+}
+
+.login-footer {
+  margin-top: 32px;
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px solid var(--va-background-element);
+}
+
+.footer-text {
+  font-size: 12px;
+  color: var(--va-text-secondary);
+  margin: 0;
+}
+
+/* Кнопка смены темы */
+.theme-toggle-corner {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 10;
+}
+
+:deep(.theme-toggle-corner .va-button) {
+  width: 56px !important;
+  height: 56px !important;
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s ease !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+:deep(.theme-toggle-corner .va-button:hover) {
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
+  border-color: var(--va-primary) !important;
+}
+
+:deep(.theme-toggle-corner .va-button .va-icon) {
+  font-size: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .login-content {
+    padding: 16px;
+  }
+  
+  .login-card {
+    padding: 24px !important;
+  }
+  
+  .login-logo {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .logo-text {
+    text-align: center;
+  }
+  
+  .logo-title {
+    font-size: 24px;
+  }
+  
+  .login-title {
+    font-size: 20px;
+  }
+  
+  .theme-toggle-corner {
+    bottom: 16px;
+    left: 16px;
+  }
+}
+</style>
