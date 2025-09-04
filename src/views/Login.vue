@@ -101,7 +101,7 @@ function toggleTheme() {
 onMounted(async () => { 
   try { 
     await account.get()
-    router.replace('/') 
+    router.replace({ name: 'dashboard' }) 
   } catch {} 
 })
 
@@ -115,10 +115,32 @@ async function onLogin() {
   loading.value = true
   
   try { 
+    // Проверяем, есть ли уже активная сессия
+    try {
+      await account.get()
+      // Если сессия активна, перенаправляем на дашборд
+      router.replace({ name: 'dashboard' })
+      return
+    } catch {
+      // Сессии нет, продолжаем логин
+    }
+    
     await account.createEmailPasswordSession(email.value, password.value)
-    router.replace('/') 
+    router.replace({ name: 'dashboard' }) 
   } catch(e) { 
-    err.value = e?.message || 'Ошибка входа. Проверьте данные и попробуйте снова.' 
+    // Улучшенная обработка ошибок
+    if (e?.message?.includes('session is active')) {
+      err.value = 'Вы уже авторизованы. Перенаправляем на дашборд...'
+      setTimeout(() => {
+        router.replace({ name: 'dashboard' })
+      }, 1500)
+    } else if (e?.message?.includes('Invalid credentials')) {
+      err.value = 'Неверный email или пароль. Проверьте данные и попробуйте снова.'
+    } else if (e?.message?.includes('User not found')) {
+      err.value = 'Пользователь с таким email не найден.'
+    } else {
+      err.value = e?.message || 'Ошибка входа. Проверьте данные и попробуйте снова.'
+    }
   } finally { 
     loading.value = false 
   }
@@ -267,8 +289,32 @@ async function onLogin() {
 
 .login-error {
   border-radius: 12px !important;
-  background: rgba(239, 68, 68, 0.1) !important;
-  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+:deep(.login-error .va-alert__content) {
+  color: #ffffff !important;
+}
+
+:deep(.login-error .va-alert__icon) {
+  color: #ffffff !important;
+}
+
+:deep(.login-error .va-alert__close) {
+  color: #ffffff !important;
+  opacity: 0.8 !important;
+}
+
+:deep(.login-error .va-alert__close:hover) {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
 }
 
 .login-footer {
