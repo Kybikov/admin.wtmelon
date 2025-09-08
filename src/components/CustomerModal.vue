@@ -82,6 +82,25 @@
           class="form-input"
           outline
         />
+        
+        <!-- Существующие теги -->
+        <div v-if="existingTags.length" class="existing-tags-section">
+          <div class="existing-tags-label">Существующие теги:</div>
+          <div class="existing-tags-list">
+            <va-chip
+              v-for="tag in existingTags"
+              :key="tag"
+              size="small"
+              color="info"
+              outline
+              clickable
+              @click="addExistingTag(tag)"
+              class="existing-tag-chip"
+            >
+              {{ tag }}
+            </va-chip>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -104,7 +123,7 @@
 
 <script setup>
 import { ref, reactive, watch, computed } from 'vue'
-import { useCreateCustomer, useUpdateCustomer } from '@/composables/useCustomersApi'
+import { useCreateCustomer, useUpdateCustomer, useCustomers } from '@/composables/useCustomersApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
 
 const props = defineProps({
@@ -121,6 +140,7 @@ const isVisible = computed({
 })
 
 const { data: regions } = useRegions()
+const { data: customers } = useCustomers()
 const { mutateAsync: createCustomer, isLoading: creating = ref(false) } = useCreateCustomer()
 const { mutateAsync: updateCustomer, isLoading: updating = ref(false) } = useUpdateCustomer()
 
@@ -154,9 +174,36 @@ const contactTypeOptions = [
 
 const countryOptions = computed(() => regions.value || [])
 
+// Получаем все уникальные теги из существующих клиентов
+const existingTags = computed(() => {
+  if (!customers.value) return []
+  
+  const allTags = new Set()
+  customers.value.forEach(customer => {
+    if (Array.isArray(customer.tags)) {
+      customer.tags.forEach(tag => {
+        if (tag && tag.trim()) {
+          allTags.add(tag.trim())
+        }
+      })
+    }
+  })
+  
+  return Array.from(allTags).sort()
+})
+
+function addExistingTag(tag) {
+  const currentTags = form.tags ? form.tags.split(',').map(t => t.trim()).filter(t => t) : []
+  if (!currentTags.includes(tag)) {
+    currentTags.push(tag)
+    form.tags = currentTags.join(', ')
+  }
+}
 // Заполняем форму при редактировании
 watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
   if (customer && isEdit) {
+    console.log('Filling form with customer data:', customer)
+    console.log('Customer ID:', customer.$id)
     Object.assign(form, {
       name: customer.name || '',
       country: customer.regions_id || '',
@@ -168,7 +215,7 @@ watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
       tags: Array.isArray(customer.tags) ? customer.tags.join(', ') : '',
       status: customer.status || 'active'
     })
-    console.log('Form filled with customer data:', form)
+    console.log('Form after filling:', form)
   }
 }, { immediate: true })
 
@@ -221,12 +268,16 @@ async function handleSubmit() {
     }
 
     if (props.isEdit && props.customer) {
+      console.log('UPDATING customer with ID:', props.customer.$id)
       console.log('Updating customer with ID:', props.customer.$id)
       console.log('Update payload:', payload)
       await updateCustomer({ id: props.customer.$id, ...payload })
+      console.log('Customer updated successfully')
     } else {
+      console.log('CREATING new customer')
       console.log('Creating new customer with payload:', payload)
       await createCustomer(payload)
+      console.log('Customer created successfully')
     }
 
     emit('success')
@@ -274,6 +325,33 @@ async function handleSubmit() {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+.existing-tags-section {
+  margin-top: 12px;
+}
+
+.existing-tags-label {
+  font-size: 14px;
+  color: var(--va-text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.existing-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.existing-tag-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.existing-tag-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {

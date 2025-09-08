@@ -606,6 +606,7 @@ function viewCustomer({ item: customer }) {
 function editCustomer(customer) {
   console.log('Editing customer:', customer)
   console.log('Customer ID:', customer.$id)
+  console.log('Is edit mode will be:', true)
   selectedCustomer.value = customer
   isEditMode.value = true
   showCreateModal.value = true
