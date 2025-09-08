@@ -76,7 +76,6 @@
               >
                 Назначить
               </va-button>
-            </div>
           </div>
         </div>
         <div v-else class="no-seats">
