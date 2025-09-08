@@ -805,7 +805,7 @@ function handleCustomerSuccess() {
 
 .status-filters {
   display: flex;
-  align-items: center;
+  align-items: right;
   gap: 16px;
   flex-wrap: wrap;
 }
