@@ -99,6 +99,7 @@
                       {{ getRegionName(account.regions_id) }}
                     </span>
                   </div>
+                  <span v-if="isAccountExpiringSoon(account)" class="expiring-warning">⚠️ Истекает скоро!</span>
                 </div>
 
                 <div class="account-progress">
@@ -130,7 +131,7 @@
       v-model="showDetailsModal"
       :account="selectedAccount"
       @edit="editAccount"
-      @assign-seat="handleAssignSeat"
+      @add-client="handleAddClient"
     />
 
     <!-- Модальное окно создания аккаунта -->
@@ -197,16 +198,12 @@
         </div>
 
         <div class="form-row">
-          <!-- Временно скрыты поля цен до добавления в схему Appwrite -->
-          <!-- 
           <va-input 
             v-model="createForm.cost_price" 
             label="Цена закупки" 
             type="number"
             :min="0"
             class="form-input"
-            disabled
-            placeholder="Будет добавлено позже"
           />
           <va-input 
             v-model="createForm.sell_price" 
@@ -214,10 +211,7 @@
             type="number"
             :min="0"
             class="form-input"
-            disabled
-            placeholder="Будет добавлено позже"
           />
-          -->
         </div>
 
         <va-date-input
@@ -261,7 +255,7 @@
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { account } from '@/appwrite/client'
-import { useAccounts, useCreateAccount } from '@/composables/useAccountsApi'
+import { useAccounts, useCreateAccount, useDeleteAccount } from '@/composables/useAccountsApi'
 import { useServices } from '@/composables/useServicesApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
 import AccountDetails from '@/components/AccountDetails.vue'
@@ -283,6 +277,7 @@ const { data: accounts, isLoading: accountsLoading } = useAccounts()
 const { data: services } = useServices()
 const { data: regions } = useRegions()
 const { mutateAsync: createAccount, isLoading: creating } = useCreateAccount()
+const { mutateAsync: deleteAccount } = useDeleteAccount()
 
 // Отладка данных
 watch(accounts, (newAccounts) => {
@@ -317,8 +312,7 @@ const createForm = reactive({
   household_address: '',
   is_auto_funded: false,
   status: 'active',
-  seats_taken: 0,
-  seats_free: 5
+  seats_taken: 0
 })
 
 // Устанавливаем первый сервис как активный при загрузке
@@ -363,6 +357,38 @@ function getServiceName(serviceId) {
   return service?.name || 'Неизвестный сервис'
 }
 
+function getActiveAccountsCount() {
+  if (!accounts.value) return 0
+  return accounts.value.filter(account => account.status === 'active').length
+}
+
+function getExpiringAccountsCount() {
+  if (!accounts.value) return 0
+  const threeDaysFromNow = new Date()
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
+  
+  return accounts.value.filter(account => {
+    if (!account.paid_until) return false
+    const paidUntil = new Date(account.paid_until)
+    return paidUntil <= threeDaysFromNow && paidUntil > new Date()
+  }).length
+}
+
+function getFullAccountsCount() {
+  if (!accounts.value) return 0
+  return accounts.value.filter(account => 
+    (account.seats_taken || 0) >= (account.max_seats || 0)
+  ).length
+}
+
+function isAccountExpiringSoon(account) {
+  if (!account.paid_until) return false
+  const paidUntil = new Date(account.paid_until)
+  const threeDaysFromNow = new Date()
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
+  return paidUntil <= threeDaysFromNow && paidUntil > new Date()
+}
+
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
   return region?.name || 'Не указано'
@@ -381,6 +407,7 @@ function viewAccountDetails(account) {
 function editAccount(account) {
   // TODO: Реализовать редактирование аккаунта
   console.log('Edit account:', account)
+  // Можно открыть модальное окно редактирования или перейти на отдельную страницу
 }
 
 function addClientToAccount(account) {
@@ -398,6 +425,16 @@ function handleAssignSeat({ account, seat }) {
     query: { 
       accountId: account.$id,
       seatId: seat.$id 
+    }
+  })
+}
+
+function handleAddClient(account) {
+  // Перенаправляем на создание подписки с предвыбранным аккаунтом
+  router.push({
+    name: 'new-subscription',
+    query: { 
+      accountId: account.$id
     }
   })
 }
@@ -421,8 +458,7 @@ function resetCreateForm() {
     household_address: '',
     is_auto_funded: false,
     status: 'active',
-    seats_taken: 0,
-    seats_free: 5
+    seats_taken: 0
   })
 }
 
@@ -438,28 +474,20 @@ async function handleCreateAccount() {
       password: createForm.password,
       max_seats: createForm.max_seats,
       service_login_key: createForm.service_login_key || '',
+      cost_price: createForm.cost_price || 0,
+      sell_price: createForm.sell_price || 0,
       paid_until: createForm.paid_until,
       household_address: createForm.household_address || '',
       is_auto_funded: createForm.is_auto_funded,
       status: createForm.status,
-      seats_taken: createForm.seats_taken,
-      seats_free: createForm.max_seats - createForm.seats_taken
+      seats_taken: 0
     }
-    
-    // Удаляем поля cost_price и sell_price, если они не существуют в схеме
-    // Эти поля можно будет добавить позже в Appwrite Console
-    
+
     await createAccount(payload)
     closeCreateModal()
   } catch (error) {
     console.error('Ошибка создания аккаунта:', error)
-    
-    // Показываем более информативное сообщение об ошибке
-    if (error.message?.includes('Unknown attribute')) {
-      alert('Ошибка: Некоторые поля не существуют в схеме базы данных. Обратитесь к администратору для добавления недостающих полей.')
-    } else {
-      alert(`Ошибка при создании аккаунта: ${error.message || 'Неизвестная ошибка'}`)
-    }
+    alert(`Ошибка при создании аккаунта: ${error.message || 'Неизвестная ошибка'}`)
   }
 }
 </script>
@@ -495,6 +523,11 @@ async function handleCreateAccount() {
   color: var(--va-text-secondary);
   margin: 0;
   opacity: 0.8;
+}
+
+.expiring-warning {
+  color: var(--va-warning) !important;
+  font-weight: 600;
 }
 
 /* Вкладки сервисов */
