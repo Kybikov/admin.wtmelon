@@ -529,15 +529,8 @@ function getContactTypeText(contactType) {
     'whatsapp': 'WhatsApp',
     'phone': 'Телефон',
     'Other': 'Другое',
-    'discord': 'Discord'
-  }
-  return types[contactType] || contactType
-}
-    'instagram': 'Instagram',
-    'facebook': 'Facebook',
     'discord': 'Discord',
     'email': 'Email',
-    'phone': 'Телефон',
     'other': 'Другое'
   }
   return types[contactType] || contactType
