@@ -142,10 +142,10 @@ async function createAccount(payload) {
     // Получаем текущего пользователя и добавляем его ID как created_by
     try {
         const currentUser = await account.get()
-        payload.created_by = currentUser.$id
+        payload.manager_id = currentUser.$id
     } catch (error) {
-        console.warn('Не удалось получить текущего пользователя для created_by:', error)
-        payload.created_by = null
+        console.warn('Не удалось получить текущего пользователя для manager_id:', error)
+        payload.manager_id = null
     }
     
     // Устанавливаем начальные значения
