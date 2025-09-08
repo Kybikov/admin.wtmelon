@@ -47,10 +47,20 @@ async function updateAccountSeat({ id, ...payload }) {
 
 // Освобождение места
 async function freeSeat(seatId) {
-    return await db.updateDocument(cfg.dbId, cfg.account_seats, seatId, {
-        customers_id: null,
-        is_occupied: false
+    // Получаем информацию о месте перед удалением
+    const seat = await db.getDocument(cfg.dbId, cfg.account_seats, seatId)
+    const accountId = seat.accounts_id
+    
+    // Удаляем запись о месте
+    await db.deleteDocument(cfg.dbId, cfg.account_seats, seatId)
+    
+    // Обновляем счетчик занятых мест в аккаунте
+    const account = await db.getDocument(cfg.dbId, cfg.accounts, accountId)
+    await db.updateDocument(cfg.dbId, cfg.accounts, accountId, {
+        seats_taken: Math.max(0, (account.seats_taken || 0) - 1)
     })
+    
+    return { success: true }
 }
 
 // Занятие места

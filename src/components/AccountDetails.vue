@@ -254,6 +254,41 @@ async function handleFreeSeat(seat) {
   justify-content: center;
 }
 
+.seats-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seats-info {
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-background-element);
+}
+
+.seats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seats-count {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-progress {
+  width: 100%;
+}
+
+.seats-list h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
 .seats-list {
   display: flex;
   flex-direction: column;
@@ -276,6 +311,14 @@ async function handleFreeSeat(seat) {
   background: rgba(29, 185, 84, 0.05);
 }
 
+.add-seat-section {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 2px dashed var(--va-background-element);
+}
 .seat-info {
   flex: 1;
 }
