@@ -248,6 +248,134 @@
         </div>
       </template>
     </va-modal>
+
+    <!-- Модальное окно редактирования аккаунта -->
+    <va-modal 
+      v-model="showEditModal" 
+      title="Редактировать аккаунт"
+      size="large"
+      @close="closeEditModal"
+    >
+      <div class="create-account-form">
+        <div class="form-row">
+          <va-select
+            v-model="editForm.services_id"
+            label="Сервис *"
+            :options="services"
+            text-by="name"
+            value-by="$id"
+            :rules="[v => !!v || 'Сервис обязателен']"
+            class="form-input"
+          />
+          <va-select
+            v-model="editForm.regions_id"
+            label="Регион *"
+            :options="regions"
+            text-by="name"
+            value-by="$id"
+            :rules="[v => !!v || 'Регион обязателен']"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-row">
+          <va-input 
+            v-model="editForm.login" 
+            label="Логин *" 
+            :rules="[v => !!v || 'Логин обязателен']"
+            class="form-input"
+          />
+          <va-input 
+            v-model="editForm.password" 
+            label="Пароль *" 
+            type="password"
+            :rules="[v => !!v || 'Пароль обязателен']"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-row">
+          <va-input 
+            v-model="editForm.max_seats" 
+            label="Максимум мест *" 
+            type="number"
+            :min="1"
+            :max="10"
+            :rules="[v => !!v || 'Количество мест обязательно']"
+            class="form-input"
+          />
+          <va-input 
+            v-model="editForm.service_login_key" 
+            label="Ключ аккаунта" 
+            placeholder="Например: SPAC-0001"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-row">
+          <va-input 
+            v-model="editForm.cost_price" 
+            label="Цена закупки" 
+            type="number"
+            :min="0"
+            class="form-input"
+          />
+          <va-input 
+            v-model="editForm.sell_price" 
+            label="Цена продажи" 
+            type="number"
+            :min="0"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-row">
+          <va-date-input
+            v-model="editForm.paid_until"
+            label="Оплачено до"
+            class="form-input"
+          />
+          <va-select
+            v-model="editForm.status"
+            label="Статус"
+            :options="[
+              { text: 'Активен', value: 'active' },
+              { text: 'Неактивен', value: 'inactive' }
+            ]"
+            text-by="text"
+            value-by="value"
+            class="form-input"
+          />
+        </div>
+
+        <va-textarea 
+          v-model="editForm.household_address" 
+          label="Адрес домохозяйства"
+          rows="2"
+          class="form-input"
+        />
+
+        <va-checkbox 
+          v-model="editForm.is_auto_funded"
+          label="Автоматическое финансирование"
+        />
+      </div>
+
+      <template #footer>
+        <div class="modal-footer">
+          <va-button preset="secondary" @click="closeEditModal">
+            Отмена
+          </va-button>
+          <va-button 
+            :loading="creating" 
+            @click="handleUpdateAccount"
+            :disabled="!isEditFormValid"
+          >
+            Сохранить изменения
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
   </div>
 </template>
 
@@ -255,7 +383,7 @@
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { account } from '@/appwrite/client'
-import { useAccounts, useCreateAccount, useDeleteAccount } from '@/composables/useAccountsApi'
+import { useAccounts, useCreateAccount, useDeleteAccount, useUpdateAccount } from '@/composables/useAccountsApi'
 import { useServices } from '@/composables/useServicesApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
 import AccountDetails from '@/components/AccountDetails.vue'
@@ -278,6 +406,7 @@ const { data: services } = useServices()
 const { data: regions } = useRegions()
 const { mutateAsync: createAccount, isLoading: creating } = useCreateAccount()
 const { mutateAsync: deleteAccount } = useDeleteAccount()
+const { mutateAsync: updateAccount } = useUpdateAccount()
 
 // Отладка данных
 watch(accounts, (newAccounts) => {
@@ -296,7 +425,9 @@ watch(accountsLoading, (loading) => {
 const activeServiceTab = ref('')
 const showDetailsModal = ref(false)
 const showCreateModal = ref(false)
+const showEditModal = ref(false)
 const selectedAccount = ref(null)
+const isEditMode = ref(false)
 
 // Форма создания аккаунта
 const createForm = reactive({
@@ -313,6 +444,22 @@ const createForm = reactive({
   is_auto_funded: false,
   status: 'active',
   seats_taken: 0
+})
+
+// Форма редактирования аккаунта (копия createForm)
+const editForm = reactive({
+  services_id: '',
+  regions_id: '',
+  login: '',
+  password: '',
+  max_seats: 5,
+  service_login_key: '',
+  cost_price: 0,
+  sell_price: 0,
+  paid_until: null,
+  household_address: '',
+  is_auto_funded: false,
+  status: 'active'
 })
 
 // Устанавливаем первый сервис как активный при загрузке
@@ -343,6 +490,14 @@ const isCreateFormValid = computed(() => {
          createForm.login && 
          createForm.password && 
          createForm.max_seats > 0
+})
+
+const isEditFormValid = computed(() => {
+  return editForm.services_id && 
+         editForm.regions_id && 
+         editForm.login && 
+         editForm.password && 
+         editForm.max_seats > 0
 })
 
 // Методы
@@ -405,9 +560,27 @@ function viewAccountDetails(account) {
 }
 
 function editAccount(account) {
-  // TODO: Реализовать редактирование аккаунта
   console.log('Edit account:', account)
-  // Можно открыть модальное окно редактирования или перейти на отдельную страницу
+  
+  // Заполняем форму редактирования данными аккаунта
+  Object.assign(editForm, {
+    services_id: account.services_id || '',
+    regions_id: account.regions_id || '',
+    login: account.login || '',
+    password: account.password || '',
+    max_seats: account.max_seats || 5,
+    service_login_key: account.service_login_key || '',
+    cost_price: account.cost_price || 0,
+    sell_price: account.sell_price || 0,
+    paid_until: account.paid_until || null,
+    household_address: account.household_address || '',
+    is_auto_funded: account.is_auto_funded || false,
+    status: account.status || 'active'
+  })
+  
+  selectedAccount.value = account
+  isEditMode.value = true
+  showEditModal.value = true
 }
 
 function addClientToAccount(account) {
@@ -444,6 +617,13 @@ function closeCreateModal() {
   resetCreateForm()
 }
 
+function closeEditModal() {
+  showEditModal.value = false
+  selectedAccount.value = null
+  isEditMode.value = false
+  resetEditForm()
+}
+
 function resetCreateForm() {
   Object.assign(createForm, {
     services_id: '',
@@ -459,6 +639,23 @@ function resetCreateForm() {
     is_auto_funded: false,
     status: 'active',
     seats_taken: 0
+  })
+}
+
+function resetEditForm() {
+  Object.assign(editForm, {
+    services_id: '',
+    regions_id: '',
+    login: '',
+    password: '',
+    max_seats: 5,
+    service_login_key: '',
+    cost_price: 0,
+    sell_price: 0,
+    paid_until: null,
+    household_address: '',
+    is_auto_funded: false,
+    status: 'active'
   })
 }
 
@@ -488,6 +685,34 @@ async function handleCreateAccount() {
   } catch (error) {
     console.error('Ошибка создания аккаунта:', error)
     alert(`Ошибка при создании аккаунта: ${error.message || 'Неизвестная ошибка'}`)
+  }
+}
+
+async function handleUpdateAccount() {
+  if (!isEditFormValid.value || !selectedAccount.value) return
+
+  try {
+    const payload = {
+      id: selectedAccount.value.$id,
+      services_id: editForm.services_id,
+      regions_id: editForm.regions_id,
+      login: editForm.login,
+      password: editForm.password,
+      max_seats: editForm.max_seats,
+      service_login_key: editForm.service_login_key || '',
+      cost_price: editForm.cost_price || 0,
+      sell_price: editForm.sell_price || 0,
+      paid_until: editForm.paid_until,
+      household_address: editForm.household_address || '',
+      is_auto_funded: editForm.is_auto_funded,
+      status: editForm.status
+    }
+
+    await updateAccount(payload)
+    closeEditModal()
+  } catch (error) {
+    console.error('Ошибка обновления аккаунта:', error)
+    alert(`Ошибка при обновлении аккаунта: ${error.message || 'Неизвестная ошибка'}`)
   }
 }
 </script>

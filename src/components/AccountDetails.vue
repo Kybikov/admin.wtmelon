@@ -126,6 +126,22 @@
             <span class="financial-label">Адрес домохозяйства:</span>
             <span class="financial-value">{{ account.household_address || 'Не указан' }}</span>
           </div>
+          <div class="financial-item">
+            <span class="financial-label">Логин:</span>
+            <span class="financial-value">{{ account.login || 'Не указан' }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Пароль:</span>
+            <span class="financial-value">{{ account.password ? '••••••••' : 'Не указан' }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Создан:</span>
+            <span class="financial-value">{{ formatDate(account.$createdAt) }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Создал:</span>
+            <span class="financial-value">{{ account.created_by ? `ID: ${account.created_by.slice(-6)}` : 'Не указан' }}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -139,6 +139,14 @@ async function occupySeat(accountId, customerId) {
 
 // Создание аккаунта
 async function createAccount(payload) {
+    // Получаем текущего пользователя и добавляем его ID
+    try {
+        const currentUser = await account.get()
+        payload.created_by = currentUser.$id
+    } catch (error) {
+        console.warn('Не удалось получить текущего пользователя:', error)
+    }
+    
     // Устанавливаем начальные значения
     payload.seats_taken = 0
     payload.status = payload.status || 'active'
@@ -291,6 +299,17 @@ export function useDeleteAccount() {
         mutationFn: deleteAccount,
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['accounts'] })
+        }
+    })
+}
+
+export function useUpdateAccount() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: updateAccount,
+        onSuccess: (data) => {
+            qc.invalidateQueries({ queryKey: ['accounts'] })
+            qc.invalidateQueries({ queryKey: ['account', data.$id] })
         }
     })
 }
