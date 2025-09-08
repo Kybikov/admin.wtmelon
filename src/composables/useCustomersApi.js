@@ -33,19 +33,19 @@ async function deleteCustomer(id) {
 // Получение статистики клиента
 async function getCustomerStats(customerId) {
     try {
-        // Получаем все подписки клиента
-        const subscriptions = await db.listDocuments(cfg.dbId, cfg.subscriptions, [
-            Query.equal('customers_id', customerId)
+        // Получаем все подписки и заказы, затем фильтруем на клиенте
+        const [subscriptionsResponse, ordersResponse] = await Promise.all([
+            db.listDocuments(cfg.dbId, cfg.subscriptions),
+            db.listDocuments(cfg.dbId, cfg.orders)
         ])
         
-        // Получаем все заказы клиента
-        const orders = await db.listDocuments(cfg.dbId, cfg.orders, [
-            Query.equal('customers_id', customerId)
-        ])
+        // Фильтруем подписки и заказы для конкретного клиента
+        const subscriptions = subscriptionsResponse.documents.filter(sub => sub.customers_id === customerId)
+        const orders = ordersResponse.documents.filter(order => order.customers_id === customerId)
         
-        const totalPurchases = orders.documents.length
-        const totalSpent = orders.documents.reduce((sum, order) => sum + (order.sell_price || 0), 0)
-        const activeSubscriptions = subscriptions.documents.filter(sub => sub.state === 'active').length
+        const totalPurchases = orders.length
+        const totalSpent = orders.reduce((sum, order) => sum + (order.sell_price || 0), 0)
+        const activeSubscriptions = subscriptions.filter(sub => sub.state === 'active').length
         
         return {
             totalPurchases,

@@ -131,7 +131,7 @@ const loading = computed(() => creating.value || updating.value)
 const form = reactive({
   name: '',
   country: '',
-  contact_type: 'telegram',
+  contact_type: 'Telegram',
   contact_url: '',
   contact_handle: '',
   phone: '',
@@ -145,12 +145,12 @@ const errors = reactive({
 })
 
 const contactTypeOptions = [
-  { text: 'Telegram', value: 'telegram' },
-  { text: 'WhatsApp', value: 'whatsapp' },
-  { text: 'Discord', value: 'discord' },
-  { text: 'Email', value: 'email' },
-  { text: 'Телефон', value: 'phone' },
-  { text: 'Другое', value: 'other' }
+  { text: 'Telegram', value: 'Telegram' },
+  { text: 'WhatsApp', value: 'WhatsApp' },
+  { text: 'Discord', value: 'Discord' },
+  { text: 'Email', value: 'Email' },
+  { text: 'Телефон', value: 'Phone' },
+  { text: 'Другое', value: 'Other' }
 ]
 
 const countryOptions = computed(() => regions.value || [])
@@ -161,7 +161,7 @@ watch(() => props.customer, (customer) => {
     Object.assign(form, {
       name: customer.name || '',
       country: customer.regions_id || '',
-      contact_type: customer.contact_type || 'telegram',
+      contact_type: customer.contact_type || 'Telegram',
       contact_url: customer.contact_url || '',
       contact_handle: customer.contact_handle || '',
       phone: customer.phone || '',
@@ -176,7 +176,7 @@ function resetForm() {
   Object.assign(form, {
     name: '',
     country: '',
-    contact_type: 'telegram',
+    contact_type: 'Telegram',
     contact_url: '',
     contact_handle: '',
     phone: '',

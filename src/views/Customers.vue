@@ -405,12 +405,12 @@ const countryFilterOptions = computed(() => {
 const contactTypeFilterOptions = computed(() => {
   return [
     { value: '', text: 'Все типы связи' },
-    { value: 'telegram', text: 'Telegram' },
-    { value: 'whatsapp', text: 'WhatsApp' },
-    { value: 'discord', text: 'Discord' },
-    { value: 'email', text: 'Email' },
-    { value: 'phone', text: 'Телефон' },
-    { value: 'other', text: 'Другое' }
+    { value: 'Telegram', text: 'Telegram' },
+    { value: 'WhatsApp', text: 'WhatsApp' },
+    { value: 'Discord', text: 'Discord' },
+    { value: 'Email', text: 'Email' },
+    { value: 'Phone', text: 'Телефон' },
+    { value: 'Other', text: 'Другое' }
   ]
 })
 
@@ -505,12 +505,12 @@ function getServiceName(serviceId) {
 
 function getContactTypeText(contactType) {
   const types = {
-    'telegram': 'Telegram',
-    'whatsapp': 'WhatsApp',
-    'discord': 'Discord',
-    'email': 'Email',
-    'phone': 'Телефон',
-    'other': 'Другое'
+    'Telegram': 'Telegram',
+    'WhatsApp': 'WhatsApp',
+    'Discord': 'Discord',
+    'Email': 'Email',
+    'Phone': 'Телефон',
+    'Other': 'Другое'
   }
   return types[contactType] || contactType
 }
@@ -578,8 +578,14 @@ function viewCustomer(customer) {
 async function loadCustomerSubscriptions(customerId) {
   customerSubscriptionsLoading.value = true
   try {
-    const { data } = await useCustomerSubscriptions(customerId)
-    customerSubscriptions.value = data.value
+    const { db, cfg } = await import('@/appwrite/client')
+    const { Query } = await import('appwrite')
+    
+    const response = await db.listDocuments(cfg.dbId, cfg.subscriptions, [
+      Query.equal('customers_id', customerId),
+      Query.orderDesc('$createdAt')
+    ])
+    customerSubscriptions.value = response.documents
   } catch (error) {
     console.error('Error loading customer subscriptions:', error)
     customerSubscriptions.value = []
