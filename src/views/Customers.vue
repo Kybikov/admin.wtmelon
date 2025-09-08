@@ -586,7 +586,7 @@ function hasContactInfo(customer) {
   return customer.phone || customer.contact_url || customer.regions_id
 }
 
-function viewCustomer(customer) {
+function viewCustomer({ item: customer }) {
   if (!customer || !customer.$id) {
     console.error('Invalid customer data:', customer)
     return
