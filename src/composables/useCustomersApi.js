@@ -1,6 +1,7 @@
 import { db, cfg } from '@/appwrite/client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { ID, Query } from 'appwrite'
+import { useAccounts, useCreateAccount } from '@/composables/useAccountsApi'
 
 // Получение всех клиентов
 async function listCustomers() {
