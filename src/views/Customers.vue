@@ -55,6 +55,16 @@
             clearable
             class="filter-select"
           />
+          
+          <va-select
+            v-model="selectedTag"
+            label="Тег"
+            :options="tagFilterOptions"
+            text-by="text"
+            value-by="value"
+            clearable
+            class="filter-select"
+          />
         </div>
         
         <div class="status-filters">
@@ -356,6 +366,7 @@ const activeFilter = ref('all')
 const selectedService = ref('')
 const selectedCountry = ref('')
 const selectedContactType = ref('')
+const selectedTag = ref('')
 const currentPage = ref(1)
 
 const statusFilters = [
@@ -442,6 +453,26 @@ const contactTypeFilterOptions = computed(() => {
   ]
 })
 
+const tagFilterOptions = computed(() => {
+  if (!customers.value) return [{ value: '', text: 'Все теги' }]
+  
+  const allTags = new Set()
+  customers.value.forEach(customer => {
+    if (Array.isArray(customer.tags)) {
+      customer.tags.forEach(tag => {
+        if (tag && tag.trim()) {
+          allTags.add(tag.trim())
+        }
+      })
+    }
+  })
+  
+  return [
+    { value: '', text: 'Все теги' },
+    ...Array.from(allTags).sort().map(tag => ({ value: tag, text: tag }))
+  ]
+})
+
 // Вычисляемые свойства
 const filteredCustomers = computed(() => {
   if (!customers.value) return []
@@ -479,6 +510,14 @@ const filteredCustomers = computed(() => {
   // Фильтр по типу связи
   if (selectedContactType.value) {
     filtered = filtered.filter(customer => customer.contact_type === selectedContactType.value)
+  }
+  
+  // Фильтр по тегу
+  if (selectedTag.value) {
+    filtered = filtered.filter(customer => {
+      if (!Array.isArray(customer.tags)) return false
+      return customer.tags.includes(selectedTag.value)
+    })
   }
   
   return filtered
