@@ -16,6 +16,9 @@
     <va-card class="services-tabs-card">
       <va-tabs v-model="activeServiceTab" class="services-tabs">
         <template #tabs>
+          <va-tab name="all">
+            Все аккаунты
+          </va-tab>
           <va-tab 
             v-for="service in services" 
             :key="service.$id"
@@ -32,9 +35,9 @@
               <p>Загрузка аккаунтов...</p>
             </div>
             
-            <div v-else-if="getAccountsByService(tabValue)?.length" class="accounts-grid">
+            <div v-else-if="getAccountsForTab(tabValue)?.length" class="accounts-grid">
               <va-card 
-                v-for="account in getAccountsByService(tabValue)" 
+                v-for="account in getAccountsForTab(tabValue)" 
                 :key="account.$id"
                 class="account-card"
                 :class="{ 'account-full': account.seats_taken >= account.max_seats }"
@@ -111,7 +114,8 @@
             <div v-else class="no-accounts">
               <va-icon name="account_box" size="64px" color="secondary" />
               <h3>Нет аккаунтов</h3>
-              <p>Для сервиса {{ getServiceName(tabValue) }} пока нет созданных аккаунтов</p>
+              <p v-if="tabValue === 'all'">Пока нет созданных аккаунтов</p>
+              <p v-else>Для сервиса {{ getServiceName(tabValue) }} пока нет созданных аккаунтов</p>
               <va-button @click="showCreateModal = true">
                 Создать первый аккаунт
               </va-button>
@@ -305,8 +309,8 @@ const createForm = reactive({
 
 // Устанавливаем первый сервис как активный при загрузке
 watch(services, (newServices) => {
-  if (newServices?.length && !activeServiceTab.value) {
-    activeServiceTab.value = newServices[0].$id
+  if (!activeServiceTab.value) {
+    activeServiceTab.value = 'all'
   }
 }, { immediate: true })
 
@@ -320,6 +324,18 @@ const isCreateFormValid = computed(() => {
 })
 
 // Методы
+function getAccountsForTab(tabValue) {
+  if (!accounts.value) return []
+  
+  // Если выбрана вкладка "Все аккаунты"
+  if (tabValue === 'all') {
+    return accounts.value
+  }
+  
+  // Иначе фильтруем по сервису
+  return accounts.value.filter(account => account.services_id === tabValue)
+}
+
 function getAccountsByService(serviceId) {
   if (!accounts.value || !serviceId) return []
   return accounts.value.filter(account => account.services_id === serviceId)
