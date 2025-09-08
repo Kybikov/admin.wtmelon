@@ -1,6 +1,9 @@
 import Login from '@/views/Login.vue'
-import Dashboard from '@/views/Dashboard.vue'
-import Customers from '@/views/customers/Customers.vue'
+import Dashboard from '@/views/Dashboard.vue' 
+import Customers from '@/views/Customers.vue'
+import Accounts from '@/views/Accounts.vue'
+import Subscriptions from '@/views/Subscriptions.vue'
+import NewSubscription from '@/views/NewSubscription.vue'
 import Analytics from '@/views/Analytics.vue'
 import Invoices from '@/views/Invoices.vue'
 import Payments from '@/views/Payments.vue'
@@ -32,6 +35,24 @@ export default [
         path: '/customers',
         name: 'customers',
         component: Customers,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/accounts',
+        name: 'accounts',
+        component: Accounts,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/subscriptions',
+        name: 'subscriptions',
+        component: Subscriptions,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/subscriptions/new',
+        name: 'new-subscription',
+        component: NewSubscription,
         meta: { requiresAuth: true }
     },
     {

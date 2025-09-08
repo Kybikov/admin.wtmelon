@@ -155,6 +155,8 @@ onMounted(async () => {
 const navItems = [
   { name: 'dashboard', title: 'Дашборд', icon: 'dashboard' },
   { name: 'customers', title: 'Клиенты', icon: 'people' },
+  { name: 'accounts', title: 'Аккаунты', icon: 'account_box' },
+  { name: 'subscriptions', title: 'Подписки', icon: 'subscriptions' },
   { name: 'products', title: 'Продукты', icon: 'inventory' },
   { name: 'orders', title: 'Заказы', icon: 'shopping_cart' },
   { name: 'analytics', title: 'Аналитика', icon: 'analytics' },

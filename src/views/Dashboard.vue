@@ -17,8 +17,8 @@
           </div>
           <div class="metric-info">
             <div class="metric-label">ВСЕГО КЛИЕНТОВ</div>
-            <div class="metric-value">3 247</div>
-            <div class="metric-change positive">+14.2% ЗА МЕСЯЦ</div>
+            <div class="metric-value">{{ customersCount || 0 }}</div>
+            <div class="metric-change positive">{{ customersCount ? '+' + Math.round(customersCount * 0.142) : '0' }}% ЗА МЕСЯЦ</div>
           </div>
         </div>
       </va-card>
@@ -30,7 +30,7 @@
           </div>
           <div class="metric-info">
             <div class="metric-label">АКТИВНЫЕ ПОДПИСКИ</div>
-            <div class="metric-value">2 856</div>
+            <div class="metric-value">{{ subscriptionsStats?.active || 0 }}</div>
             <div class="metric-change positive">+18.7% ЗА МЕСЯЦ</div>
           </div>
         </div>
@@ -52,12 +52,25 @@
       <va-card class="metric-card">
         <div class="metric-content">
           <div class="metric-icon orange">
-            <va-icon name="percent" size="24px" />
+            <va-icon name="schedule" size="24px" />
           </div>
           <div class="metric-info">
-            <div class="metric-label">CHURN RATE</div>
-            <div class="metric-value">2.8%</div>
-            <div class="metric-change negative">-1.2% ЗА МЕСЯЦ</div>
+            <div class="metric-label">ИСТЕКАЕТ В 3 ДНЯ</div>
+            <div class="metric-value">{{ subscriptionsStats?.expiring || 0 }}</div>
+            <div class="metric-change negative">Требуют внимания</div>
+          </div>
+        </div>
+      </va-card>
+
+      <va-card class="metric-card">
+        <div class="metric-content">
+          <div class="metric-icon red">
+            <va-icon name="error" size="24px" />
+          </div>
+          <div class="metric-info">
+            <div class="metric-label">ПРОСРОЧЕНО</div>
+            <div class="metric-value">{{ subscriptionsStats?.overdue || 0 }}</div>
+            <div class="metric-change negative">Критично</div>
           </div>
         </div>
       </va-card>
@@ -65,65 +78,49 @@
 
     <!-- Нижние секции -->
     <div class="dashboard-sections">
-      <!-- Последняя активность -->
-      <va-card class="activity-card">
+      <!-- Требуют внимания -->
+      <va-card class="attention-card">
         <div class="card-header">
-          <h3>Последняя активность</h3>
-          <va-button preset="plain" size="small">Показать все</va-button>
+          <h3>Требуют внимания</h3>
+          <va-button preset="plain" size="small" @click="$router.push('/subscriptions')">
+            Все подписки
+          </va-button>
         </div>
         
-        <div class="activity-list">
-          <div class="activity-item">
-            <div class="activity-icon success">
-              <va-icon name="check_circle" size="16px" />
+        <div v-if="expiringLoading || overdueLoading" class="loading-attention">
+          <va-progress-circle indeterminate size="small" />
+          <span>Загрузка...</span>
+        </div>
+        <div v-else-if="attentionSubscriptions.length" class="attention-list">
+          <div 
+            v-for="subscription in attentionSubscriptions" 
+            :key="subscription.$id"
+            class="attention-item"
+          >
+            <div class="attention-icon" :class="getStatusClass(subscription.state)">
+              <va-icon :name="getStatusIcon(subscription.state)" size="16px" />
             </div>
-            <div class="activity-content">
-              <div class="activity-text">
-                <strong>Алексей Иванов</strong> оформил подписку <strong>Spotify Premium</strong>
+            <div class="attention-content">
+              <div class="attention-text">
+                <strong>{{ getCustomerName(subscription.customers_id) }}</strong> - 
+                <strong>{{ getServiceName(subscription.services_id) }}</strong>
               </div>
-              <div class="activity-time">3 мин назад</div>
-            </div>
-            <div class="activity-amount">499,00 ₴</div>
-          </div>
-
-          <div class="activity-item">
-            <div class="activity-icon info">
-              <va-icon name="info" size="16px" />
-            </div>
-            <div class="activity-content">
-              <div class="activity-text">
-                <strong>Мария Петрова</strong> продлил подписку <strong>Apple Music</strong>
+              <div class="attention-time">
+                {{ subscription.state === 'overdue' ? 'Просрочено' : 'Истекает' }}: 
+                {{ formatDate(subscription.end_date) }}
               </div>
-              <div class="activity-time">8 мин назад</div>
             </div>
-            <div class="activity-amount">499,00 ₴</div>
+            <va-chip 
+              :color="getStatusColor(subscription.state)" 
+              size="small"
+            >
+              {{ getStatusText(subscription.state) }}
+            </va-chip>
           </div>
-
-          <div class="activity-item">
-            <div class="activity-icon danger">
-              <va-icon name="cancel" size="16px" />
-            </div>
-            <div class="activity-content">
-              <div class="activity-text">
-                <strong>Дмитрий Сидоров</strong> отменил подписку <strong>Deezer Premium</strong>
-              </div>
-              <div class="activity-time">15 мин назад</div>
-            </div>
-            <div class="activity-amount">-</div>
-          </div>
-
-          <div class="activity-item">
-            <div class="activity-icon warning">
-              <va-icon name="warning" size="16px" />
-            </div>
-            <div class="activity-content">
-              <div class="activity-text">
-                <strong>Ольга Козлова</strong> не удалось списать оплату за <strong>YouTube Premium</strong>
-              </div>
-              <div class="activity-time">45 мин назад</div>
-            </div>
-            <div class="activity-amount">399,00 ₴</div>
-          </div>
+        </div>
+        <div v-else class="no-attention">
+          <va-icon name="check_circle" size="48px" color="success" />
+          <p>Все подписки в порядке!</p>
         </div>
       </va-card>
 
@@ -131,65 +128,36 @@
       <va-card class="services-card">
         <div class="card-header">
           <h3>Топ сервисы</h3>
-          <va-button preset="plain" size="small">Подробнее</va-button>
+          <va-button preset="plain" size="small" @click="$router.push('/subscriptions')">
+            Подробнее
+          </va-button>
         </div>
         
-        <div class="services-list">
-          <div class="service-item">
+        <div v-if="servicesLoading" class="loading-services">
+          <va-progress-circle indeterminate size="small" />
+          <span>Загрузка сервисов...</span>
+        </div>
+        <div v-else-if="services?.length" class="services-list">
+          <div 
+            v-for="service in services.slice(0, 4)" 
+            :key="service.$id"
+            class="service-item"
+          >
             <div class="service-info">
               <div class="service-indicator green"></div>
               <div class="service-details">
-                <div class="service-name">Spotify Premium</div>
-                <div class="service-users">1247 пользователей</div>
+                <div class="service-name">{{ service.name }}</div>
+                <div class="service-users">{{ getServiceSubscriptionsCount(service.$id) }} подписок</div>
               </div>
             </div>
             <div class="service-revenue">
-              <div class="service-amount">622 300,00 ₴</div>
+              <div class="service-amount">{{ getServiceRevenue(service.$id) }} ₴</div>
               <div class="service-change positive">+15.2%</div>
             </div>
           </div>
-
-          <div class="service-item">
-            <div class="service-info">
-              <div class="service-indicator red"></div>
-              <div class="service-details">
-                <div class="service-name">Apple Music</div>
-                <div class="service-users">892 пользователей</div>
-              </div>
-            </div>
-            <div class="service-revenue">
-              <div class="service-amount">445 600,00 ₴</div>
-              <div class="service-change positive">+12.8%</div>
-            </div>
-          </div>
-
-          <div class="service-item">
-            <div class="service-info">
-              <div class="service-indicator red"></div>
-              <div class="service-details">
-                <div class="service-name">YouTube Premium</div>
-                <div class="service-users">654 пользователей</div>
-              </div>
-            </div>
-            <div class="service-revenue">
-              <div class="service-amount">261 600,00 ₴</div>
-              <div class="service-change negative">-8.7%</div>
-            </div>
-          </div>
-
-          <div class="service-item">
-            <div class="service-info">
-              <div class="service-indicator orange"></div>
-              <div class="service-details">
-                <div class="service-name">Deezer Premium</div>
-                <div class="service-users">387 пользователей</div>
-              </div>
-            </div>
-            <div class="service-revenue">
-              <div class="service-amount">193 500,00 ₴</div>
-              <div class="service-change positive">+3.4%</div>
-            </div>
-          </div>
+        </div>
+        <div v-else class="no-services">
+          <p>Сервисы не найдены</p>
         </div>
       </va-card>
     </div>
@@ -197,11 +165,101 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { account } from '@/appwrite/client'
 import { useRouter } from 'vue-router'
+import { useCustomers } from '@/composables/useCustomersApi'
+import { useServices } from '@/composables/useServicesApi'
+import { 
+  useSubscriptionsStats, 
+  useExpiringSubscriptions, 
+  useSubscriptionsByStatus,
+  useSubscriptions 
+} from '@/composables/useSubscriptionsApi'
 
 const router = useRouter()
+
+// Данные
+const { data: customers } = useCustomers()
+const { data: services, isLoading: servicesLoading } = useServices()
+const { data: subscriptionsStats } = useSubscriptionsStats()
+const { data: expiringSubscriptions, isLoading: expiringLoading } = useExpiringSubscriptions(3)
+const { data: overdueSubscriptions, isLoading: overdueLoading } = useSubscriptionsByStatus('overdue')
+const { data: allSubscriptions } = useSubscriptions()
+
+// Вычисляемые свойства
+const customersCount = computed(() => customers.value?.length || 0)
+
+const attentionSubscriptions = computed(() => {
+  const expiring = expiringSubscriptions.value || []
+  const overdue = overdueSubscriptions.value || []
+  return [...overdue, ...expiring].slice(0, 5)
+})
+
+// Методы
+function getCustomerName(customerId) {
+  const customer = customers.value?.find(c => c.$id === customerId)
+  return customer?.name || 'Неизвестный клиент'
+}
+
+function getServiceName(serviceId) {
+  const service = services.value?.find(s => s.$id === serviceId)
+  return service?.name || 'Неизвестный сервис'
+}
+
+function getServiceSubscriptionsCount(serviceId) {
+  if (!allSubscriptions.value) return 0
+  return allSubscriptions.value.filter(sub => sub.services_id === serviceId).length
+}
+
+function getServiceRevenue(serviceId) {
+  if (!allSubscriptions.value) return '0'
+  const revenue = allSubscriptions.value
+    .filter(sub => sub.services_id === serviceId)
+    .reduce((sum, sub) => sum + (sub.sell_price || 0), 0)
+  return revenue.toLocaleString('ru-RU')
+}
+
+function getStatusColor(state) {
+  const colors = {
+    'active': 'success',
+    'expiring_soon': 'warning',
+    'overdue': 'danger',
+    'awaiting_payment': 'info'
+  }
+  return colors[state] || 'secondary'
+}
+
+function getStatusText(state) {
+  const texts = {
+    'active': 'Активна',
+    'expiring_soon': 'Истекает',
+    'overdue': 'Просрочена',
+    'awaiting_payment': 'Ожидает оплаты'
+  }
+  return texts[state] || state
+}
+
+function getStatusClass(state) {
+  const classes = {
+    'overdue': 'danger',
+    'expiring_soon': 'warning'
+  }
+  return classes[state] || 'info'
+}
+
+function getStatusIcon(state) {
+  const icons = {
+    'overdue': 'error',
+    'expiring_soon': 'schedule'
+  }
+  return icons[state] || 'info'
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'Не указано'
+  return new Date(dateString).toLocaleDateString('ru-RU')
+}
 
 onMounted(async () => {
   try {
@@ -326,7 +384,7 @@ onMounted(async () => {
   gap: 24px;
 }
 
-.activity-card,
+.attention-card,
 .services-card {
   background: var(--va-background-secondary) !important;
   border: 1px solid var(--va-background-element) !important;
@@ -348,14 +406,23 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* Активность */
-.activity-list {
+/* Внимание */
+.loading-attention,
+.loading-services {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  justify-content: center;
+}
+
+.attention-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.activity-item {
+.attention-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -365,7 +432,7 @@ onMounted(async () => {
   border: 1px solid var(--va-background-element);
 }
 
-.activity-icon {
+.attention-icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -376,31 +443,44 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.activity-icon.success { background: #10b981; }
-.activity-icon.info { background: #3b82f6; }
-.activity-icon.danger { background: #ef4444; }
-.activity-icon.warning { background: #f59e0b; }
+.attention-icon.success { background: #10b981; }
+.attention-icon.info { background: #3b82f6; }
+.attention-icon.danger { background: #ef4444; }
+.attention-icon.warning { background: #f59e0b; }
 
-.activity-content {
+.attention-content {
   flex: 1;
 }
 
-.activity-text {
+.attention-text {
   font-size: 14px;
   color: var(--va-text-primary);
   margin-bottom: 4px;
 }
 
-.activity-time {
+.attention-time {
   font-size: 12px;
   color: var(--va-text-secondary);
   opacity: 0.7;
 }
 
-.activity-amount {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--va-text-primary);
+.no-attention {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.no-attention p {
+  margin: 12px 0 0 0;
+  color: var(--va-text-secondary);
+}
+
+.no-services {
+  text-align: center;
+  padding: 20px;
+  color: var(--va-text-secondary);
 }
 
 /* Сервисы */

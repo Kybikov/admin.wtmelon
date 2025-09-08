@@ -1,0 +1,239 @@
+<template>
+  <va-modal 
+    v-model="isVisible" 
+    :title="isEdit ? 'Редактировать клиента' : 'Добавить клиента'"
+    size="large"
+    @close="handleClose"
+  >
+    <div class="customer-form">
+      <div class="form-row">
+        <va-input 
+          v-model="form.name" 
+          label="Имя клиента *" 
+          :rules="[v => !!v || 'Имя обязательно']"
+          :error="!!errors.name"
+          :error-messages="errors.name"
+          class="form-input"
+        />
+        <va-select
+          v-model="form.country"
+          label="Страна"
+          :options="countryOptions"
+          text-by="name"
+          value-by="$id"
+          class="form-input"
+        />
+      </div>
+      
+      <div class="form-row">
+        <va-select
+          v-model="form.contact_type"
+          label="Тип контакта"
+          :options="contactTypes"
+          class="form-input"
+        />
+        <va-input 
+          v-model="form.contact_url" 
+          label="Контакт (ссылка/username)" 
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <va-input 
+          v-model="form.contact_handle" 
+          label="Handle/Username" 
+          class="form-input"
+        />
+        <va-input 
+          v-model="form.phone" 
+          label="Телефон" 
+          class="form-input"
+        />
+      </div>
+
+      <va-textarea 
+        v-model="form.comment" 
+        label="Комментарий"
+        rows="3"
+        class="form-input"
+      />
+
+      <va-input 
+        v-model="form.tags" 
+        label="Теги (через запятую)"
+        class="form-input"
+      />
+    </div>
+
+    <template #footer>
+      <div class="modal-footer">
+        <va-button preset="secondary" @click="handleClose">
+          Отмена
+        </va-button>
+        <va-button 
+          :loading="loading" 
+          @click="handleSubmit"
+          :disabled="!form.name"
+        >
+          {{ isEdit ? 'Сохранить' : 'Создать' }}
+        </va-button>
+      </div>
+    </template>
+  </va-modal>
+</template>
+
+<script setup>
+import { ref, reactive, watch, computed } from 'vue'
+import { useCreateCustomer, useUpdateCustomer } from '@/composables/useCustomersApi'
+import { useRegions } from '@/composables/useAppwriteCollections'
+
+const props = defineProps({
+  modelValue: Boolean,
+  customer: Object,
+  isEdit: Boolean
+})
+
+const emit = defineEmits(['update:modelValue', 'success'])
+
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
+const { data: regions } = useRegions()
+const { mutateAsync: createCustomer, isLoading: creating } = useCreateCustomer()
+const { mutateAsync: updateCustomer, isLoading: updating } = useUpdateCustomer()
+
+const loading = computed(() => creating.value || updating.value)
+
+const form = reactive({
+  name: '',
+  country: '',
+  contact_type: 'telegram',
+  contact_url: '',
+  contact_handle: '',
+  phone: '',
+  comment: '',
+  tags: '',
+  status: 'active'
+})
+
+const errors = reactive({
+  name: null
+})
+
+const contactTypes = [
+  'telegram',
+  'whatsapp',
+  'discord',
+  'email',
+  'phone',
+  'other'
+]
+
+const countryOptions = computed(() => regions.value || [])
+
+// Заполняем форму при редактировании
+watch(() => props.customer, (customer) => {
+  if (customer && props.isEdit) {
+    Object.assign(form, {
+      name: customer.name || '',
+      country: customer.regions_id || '',
+      contact_type: customer.contact_type || 'telegram',
+      contact_url: customer.contact_url || '',
+      contact_handle: customer.contact_handle || '',
+      phone: customer.phone || '',
+      comment: customer.comment || '',
+      tags: customer.tags || '',
+      status: customer.status || 'active'
+    })
+  }
+}, { immediate: true })
+
+function resetForm() {
+  Object.assign(form, {
+    name: '',
+    country: '',
+    contact_type: 'telegram',
+    contact_url: '',
+    contact_handle: '',
+    phone: '',
+    comment: '',
+    tags: '',
+    status: 'active'
+  })
+  errors.name = null
+}
+
+function handleClose() {
+  isVisible.value = false
+  if (!props.isEdit) {
+    resetForm()
+  }
+}
+
+async function handleSubmit() {
+  // Валидация
+  errors.name = null
+  if (!form.name) {
+    errors.name = 'Имя обязательно'
+    return
+  }
+
+  try {
+    const payload = {
+      name: form.name,
+      regions_id: form.country || null,
+      contact_type: form.contact_type,
+      contact_url: form.contact_url || null,
+      contact_handle: form.contact_handle || null,
+      phone: form.phone || null,
+      comment: form.comment || null,
+      tags: form.tags || null,
+      status: form.status
+    }
+
+    if (props.isEdit && props.customer) {
+      await updateCustomer({ id: props.customer.$id, ...payload })
+    } else {
+      await createCustomer(payload)
+    }
+
+    emit('success')
+    handleClose()
+  } catch (error) {
+    console.error('Ошибка при сохранении клиента:', error)
+  }
+}
+</script>
+
+<style scoped>
+.customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-input {
+  width: 100%;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
