@@ -159,13 +159,13 @@ watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
   if (customer && isEdit) {
     Object.assign(form, {
       name: customer.name || '',
-      country: customer.regions_id || customer.country || '',
+      country: customer.regions_id || '',
       contact_type: customer.contact_type || 'Telegram',
       contact_url: customer.contact_url || '',
       contact_handle: customer.contact_handle || '',
       phone: customer.phone || '',
       comment: customer.comment || '',
-      tags: Array.isArray(customer.tags) ? customer.tags.join(', ') : (customer.tags || ''),
+      tags: Array.isArray(customer.tags) ? customer.tags.join(', ') : '',
       status: customer.status || 'active'
     })
     console.log('Form filled with customer data:', form)
@@ -203,6 +203,11 @@ async function handleSubmit() {
   }
 
   try {
+    // Обрабатываем теги - преобразуем строку в массив
+    const tagsArray = form.tags 
+      ? form.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+      : []
+
     const payload = {
       name: form.name,
       regions_id: form.country || null,
@@ -211,13 +216,16 @@ async function handleSubmit() {
       contact_handle: form.contact_handle || null,
       phone: form.phone || null,
       comment: form.comment || null,
-      tags: form.tags || null,
+      tags: tagsArray,
       status: form.status
     }
 
     if (props.isEdit && props.customer) {
+      console.log('Updating customer with ID:', props.customer.$id)
+      console.log('Update payload:', payload)
       await updateCustomer({ id: props.customer.$id, ...payload })
     } else {
+      console.log('Creating new customer with payload:', payload)
       await createCustomer(payload)
     }
 
@@ -225,6 +233,7 @@ async function handleSubmit() {
     handleClose()
   } catch (error) {
     console.error('Ошибка при сохранении клиента:', error)
+    alert(`Ошибка: ${error.message}`)
   }
 }
 </script>

@@ -605,6 +605,7 @@ function viewCustomer({ item: customer }) {
 
 function editCustomer(customer) {
   console.log('Editing customer:', customer)
+  console.log('Customer ID:', customer.$id)
   selectedCustomer.value = customer
   isEditMode.value = true
   showCreateModal.value = true
@@ -678,6 +679,11 @@ function handleCustomerSuccess() {
   showCreateModal.value = false
   selectedCustomer.value = null
   isEditMode.value = false
+  
+  // Закрываем модальное окно просмотра если оно открыто
+  if (showViewModal.value) {
+    showViewModal.value = false
+  }
 }
 </script>
 
