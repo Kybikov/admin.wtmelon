@@ -32,24 +32,33 @@ async function deleteCustomer(id) {
 
 // Получение статистики клиента
 async function getCustomerStats(customerId) {
-    // Получаем все подписки клиента
-    const subscriptions = await db.listDocuments(cfg.dbId, cfg.subscriptions, [
-        Query.equal('customers_id', customerId)
-    ])
-    
-    // Получаем все заказы клиента
-    const orders = await db.listDocuments(cfg.dbId, cfg.orders, [
-        Query.equal('customers_id', customerId)
-    ])
-    
-    const totalPurchases = orders.documents.length
-    const totalSpent = orders.documents.reduce((sum, order) => sum + (order.sell_price || 0), 0)
-    const activeSubscriptions = subscriptions.documents.filter(sub => sub.state === 'active').length
-    
-    return {
-        totalPurchases,
-        totalSpent,
-        activeSubscriptions
+    try {
+        // Получаем все подписки клиента
+        const subscriptions = await db.listDocuments(cfg.dbId, cfg.subscriptions, [
+            Query.equal('customers_id', customerId)
+        ])
+        
+        // Получаем все заказы клиента
+        const orders = await db.listDocuments(cfg.dbId, cfg.orders, [
+            Query.equal('customers_id', customerId)
+        ])
+        
+        const totalPurchases = orders.documents.length
+        const totalSpent = orders.documents.reduce((sum, order) => sum + (order.sell_price || 0), 0)
+        const activeSubscriptions = subscriptions.documents.filter(sub => sub.state === 'active').length
+        
+        return {
+            totalPurchases,
+            totalSpent,
+            activeSubscriptions
+        }
+    } catch (error) {
+        console.error('Error fetching customer stats:', error)
+        return {
+            totalPurchases: 0,
+            totalSpent: 0,
+            activeSubscriptions: 0
+        }
     }
 }
 

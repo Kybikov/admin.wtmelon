@@ -302,14 +302,12 @@ const showViewModal = ref(false)
 const selectedCustomer = ref(null)
 const isEditMode = ref(false)
 
+// Подписки выбранного клиента - инициализируем только когда нужно
+let customerSubscriptions = ref(null)
+let customerSubscriptionsLoading = ref(false)
+
 // Статистика клиентов
 const customerStats = ref({})
-
-// Подписки выбранного клиента
-const { 
-  data: customerSubscriptions, 
-  isLoading: customerSubscriptionsLoading 
-} = useCustomerSubscriptions(computed(() => selectedCustomer.value?.$id))
 
 // Колонки таблицы
 const columns = [
@@ -432,6 +430,22 @@ function hasContactInfo(customer) {
 function viewCustomer(customer) {
   selectedCustomer.value = customer
   showViewModal.value = true
+  
+  // Загружаем подписки клиента при открытии модального окна
+  loadCustomerSubscriptions(customer.$id)
+}
+
+async function loadCustomerSubscriptions(customerId) {
+  customerSubscriptionsLoading.value = true
+  try {
+    const { data } = await useCustomerSubscriptions(customerId)
+    customerSubscriptions.value = data.value
+  } catch (error) {
+    console.error('Error loading customer subscriptions:', error)
+    customerSubscriptions.value = []
+  } finally {
+    customerSubscriptionsLoading.value = false
+  }
 }
 
 function editCustomer(customer) {
@@ -473,6 +487,7 @@ async function deleteCustomer(customer) {
 function closeViewModal() {
   showViewModal.value = false
   selectedCustomer.value = null
+  customerSubscriptions.value = null
 }
 
 function handleCustomerSuccess() {
