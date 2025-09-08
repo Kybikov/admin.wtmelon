@@ -102,8 +102,8 @@ const isVisible = computed({
 })
 
 const { data: regions } = useRegions()
-const { mutateAsync: createCustomer, isLoading: creating } = useCreateCustomer()
-const { mutateAsync: updateCustomer, isLoading: updating } = useUpdateCustomer()
+const { mutateAsync: createCustomer, isLoading: creating = ref(false) } = useCreateCustomer()
+const { mutateAsync: updateCustomer, isLoading: updating = ref(false) } = useUpdateCustomer()
 
 const loading = computed(() => creating.value || updating.value)
 
