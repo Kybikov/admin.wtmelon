@@ -15,25 +15,29 @@
     <!-- Поиск и фильтры -->
     <va-card class="filters-card">
       <div class="filters-content">
-        <va-input 
-          v-model="searchQuery" 
-          placeholder="Поиск по имени, контакту или телефону..."
-          class="search-input"
-        >
-          <template #prependInner>
-            <va-icon name="search" size="18px" />
-          </template>
-        </va-input>
-
-         <va-button 
-            v-for="filter in statusFilters" 
-            :key="filter.value"
-            :preset="activeFilter === filter.value ? 'primary' : 'secondary'"
-            size="small"
-            @click="activeFilter = filter.value"
+        <div class="search-and-status-row">
+          <va-input 
+            v-model="searchQuery" 
+            placeholder="Поиск по имени, контакту или телефону..."
+            class="search-input"
           >
-            {{ filter.label }}
-          </va-button>
+            <template #prependInner>
+              <va-icon name="search" size="18px" />
+            </template>
+          </va-input>
+
+          <div class="status-filters">
+            <va-button 
+              v-for="filter in statusFilters" 
+              :key="filter.value"
+              :preset="activeFilter === filter.value ? 'primary' : 'secondary'"
+              size="small"
+              @click="activeFilter = filter.value"
+            >
+              {{ filter.label }}
+            </va-button>
+          </div>
+        </div>
         
         <div class="filter-row">
           <va-select
@@ -787,7 +791,14 @@ function handleCustomerSuccess() {
 }
 
 .search-input {
+  flex: 1;
   max-width: 400px;
+}
+
+.search-and-status-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .filter-row {
@@ -802,7 +813,7 @@ function handleCustomerSuccess() {
 
 .status-filters {
   display: flex;
-  align-items: right;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
