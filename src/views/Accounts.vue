@@ -254,7 +254,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { account } from '@/appwrite/client'
 import { useAccounts, useCreateAccount } from '@/composables/useAccountsApi'
