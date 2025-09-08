@@ -528,6 +528,8 @@ function getStatusText(status) {
   const texts = {
     'active': 'Активный',
     'inactive': 'Неактивный'
+    'Blocked': 'Заблокированый'
+    'Test': 'Tест'
   }
   return texts[status] || status
 }
