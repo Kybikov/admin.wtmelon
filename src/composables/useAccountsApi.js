@@ -4,9 +4,17 @@ import { ID, Query } from 'appwrite'
 
 // Получение всех аккаунтов
 async function listAccounts() {
+    console.log('Fetching accounts from database...')
+    console.log('Database ID:', cfg.dbId)
+    console.log('Collection ID:', cfg.accounts)
+    
     const res = await db.listDocuments(cfg.dbId, cfg.accounts, [
         Query.orderDesc('$createdAt')
     ])
+    
+    console.log('Accounts response:', res)
+    console.log('Accounts documents:', res.documents)
+    
     return res.documents
 }
 

@@ -22,3 +22,6 @@ export const cfg = {
     regions: 'regions',
     currencies: 'currencies'
 }
+
+// Отладка конфигурации
+console.log('Appwrite config:', cfg)

@@ -272,6 +272,7 @@ const router = useRouter()
 onMounted(async () => {
   try {
     await account.get()
+    console.log('Auth successful')
   } catch {
     router.replace('/login')
   }
@@ -282,6 +283,19 @@ const { data: accounts, isLoading: accountsLoading } = useAccounts()
 const { data: services } = useServices()
 const { data: regions } = useRegions()
 const { mutateAsync: createAccount, isLoading: creating } = useCreateAccount()
+
+// Отладка данных
+watch(accounts, (newAccounts) => {
+  console.log('Accounts data:', newAccounts)
+}, { immediate: true })
+
+watch(services, (newServices) => {
+  console.log('Services data:', newServices)
+}, { immediate: true })
+
+watch(accountsLoading, (loading) => {
+  console.log('Accounts loading:', loading)
+}, { immediate: true })
 
 // Состояние
 const activeServiceTab = ref('')
