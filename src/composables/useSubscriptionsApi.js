@@ -43,11 +43,8 @@ async function getExpiringSubscriptions(days = 3) {
 
 // Создание подписки
 async function createSubscription(payload) {
-    // Убираем поле paymentMethod если оно есть - его нет в схеме Appwrite
-    const { paymentMethod, ...cleanPayload } = payload
-    
     // Создаем подписку
-    const subscription = await db.createDocument(cfg.dbId, cfg.subscriptions, ID.unique(), cleanPayload)
+    const subscription = await db.createDocument(cfg.dbId, cfg.subscriptions, ID.unique(), payload)
     
     // Если это membership подписка, обновляем место в аккаунте
     if (payload.account_seats_id) {
