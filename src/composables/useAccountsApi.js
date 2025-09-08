@@ -10,6 +10,10 @@ async function listAccounts() {
     return res.documents
 }
 
+async function createAccount(payload) {
+    return await db.createDocument(cfg.dbId, cfg.accounts, ID.unique(), payload)
+}
+
 // Получение аккаунтов по сервису
 async function getAccountsByService(serviceId) {
     const res = await db.listDocuments(cfg.dbId, cfg.accounts, [
@@ -60,6 +64,23 @@ export function useAccounts() {
         queryFn: listAccounts
     })
 }
+
+// функция создания аккаунта
+async function createAccount(payload) {
+    return await db.createDocument(cfg.dbId, cfg.accounts, ID.unique(), payload)
+}
+
+// хук создания аккаунта
+export function useCreateAccount() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: createAccount,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['accounts'] })
+        }
+    })
+}
+
 
 export function useAccountsByService(serviceId) {
     return useQuery({
