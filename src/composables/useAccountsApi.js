@@ -189,6 +189,27 @@ async function getAccountCustomers(accountId) {
     
     return customers.documents
 }
+
+// Проверка доступности мест в аккаунте
+async function checkAvailableSeats(accountId) {
+    const [account, occupiedSeats] = await Promise.all([
+        db.getDocument(cfg.dbId, cfg.accounts, accountId),
+        db.listDocuments(cfg.dbId, cfg.account_seats, [
+            Query.equal('accounts_id', accountId)
+        ])
+    ])
+    
+    const occupiedCount = occupiedSeats.documents.length
+    const maxSeats = account.max_seats || 0
+    
+    return {
+        account,
+        occupiedCount,
+        maxSeats,
+        availableSeats: maxSeats - occupiedCount,
+        canAddMore: occupiedCount < maxSeats
+    }
+}
 // Хуки для работы с аккаунтами
 export function useAccounts() {
     return useQuery({
@@ -196,6 +217,18 @@ export function useAccounts() {
         queryFn: listAccounts
     })
 }
+
+// хук создания аккаунта
+export function useCreateAccount() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: createAccount,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['accounts'] })
+        }
+    })
+}
+
 
 export function useAccountsByService(serviceId) {
     return useQuery({
@@ -221,54 +254,6 @@ export function useAccountSeats(accountId) {
     })
 }
 
-export function useAccountStats(accountId) {
-    return useQuery({
-        queryKey: ['account-stats', accountId],
-        queryFn: () => getAccountStats(accountId),
-        enabled: !!accountId
-    })
-}
-
-export function useAccountCustomers(accountId) {
-    return useQuery({
-        queryKey: ['account-customers', accountId],
-        queryFn: () => getAccountCustomers(accountId),
-        enabled: !!accountId
-    })
-}
-
-export function useCreateAccount() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: createAccount,
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['accounts'] })
-        }
-    })
-}
-
-export function useUpdateAccount() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: updateAccount,
-        onSuccess: (data) => {
-            qc.invalidateQueries({ queryKey: ['accounts'] })
-            qc.invalidateQueries({ queryKey: ['account', data.$id] })
-            qc.invalidateQueries({ queryKey: ['account-stats', data.$id] })
-        }
-    })
-}
-
-export function useDeleteAccount() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: deleteAccount,
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['accounts'] })
-        }
-    })
-}
-
 export function useUpdateAccountSeat() {
     const qc = useQueryClient()
     return useMutation({
@@ -276,8 +261,6 @@ export function useUpdateAccountSeat() {
         onSuccess: (data) => {
             qc.invalidateQueries({ queryKey: ['account-seats'] })
             qc.invalidateQueries({ queryKey: ['accounts'] })
-            qc.invalidateQueries({ queryKey: ['account-stats'] })
-            qc.invalidateQueries({ queryKey: ['account-customers'] })
         }
     })
 }
@@ -286,15 +269,9 @@ export function useFreeSeat() {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: freeSeat,
-        onSuccess: (data) => {
+        onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['account-seats'] })
             qc.invalidateQueries({ queryKey: ['accounts'] })
-            qc.invalidateQueries({ queryKey: ['account-stats'] })
-            qc.invalidateQueries({ queryKey: ['account-customers'] })
-            if (data.accountId) {
-                qc.invalidateQueries({ queryKey: ['account-stats', data.accountId] })
-                qc.invalidateQueries({ queryKey: ['account-customers', data.accountId] })
-            }
         }
     })
 }
@@ -306,8 +283,12 @@ export function useOccupySeat() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['account-seats'] })
             qc.invalidateQueries({ queryKey: ['accounts'] })
-            qc.invalidateQueries({ queryKey: ['account-stats'] })
-            qc.invalidateQueries({ queryKey: ['account-customers'] })
         }
+    })
+}
+
+export function useCheckAvailableSeats() {
+    return useMutation({
+        mutationFn: checkAvailableSeats
     })
 }
