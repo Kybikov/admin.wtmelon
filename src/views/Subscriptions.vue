@@ -188,6 +188,29 @@
               <span class="detail-value">{{ selectedSubscription.quantity || 1 }}</span>
             </div>
             <div class="detail-item">
+              <span class="detail-label">Статус:</span>
+              <span v-if="!isEditingSubscription" class="detail-value">
+                <va-chip 
+                  :color="getStatusColor(selectedSubscription.state)" 
+                  size="small"
+                >
+                  {{ getStatusText(selectedSubscription.state) }}
+                </va-chip>
+              </span>
+              <va-select
+                v-else
+                v-model="selectedSubscription.state"
+                :options="allSubscriptionStates"
+                text-by="text"
+                value-by="value"
+                class="form-input"
+                outline
+                hide-details
+                style="width: 150px;"
+              />
+
+            </div>
+            <div class="detail-item">
               <span class="detail-label">Начало:</span>
               <span class="detail-value">{{ formatDate(selectedSubscription.start_date) }}</span>
             </div>
@@ -204,10 +227,29 @@
               <span class="detail-value">{{ formatCurrency(selectedSubscription.sell_price) }}</span>
             </div>
           </div>
+
+          <div class="form-row mt-3">
+            <va-checkbox
+              v-if="isEditingSubscription"
+              v-model="selectedSubscription.is_status_frozen"
+              label="Заморозить статус (не менять автоматически)"
+              class="form-input"
+            />
+            <div v-else class="detail-item" style="width: 100%; justify-content: flex-start; gap: 10px;">
+              <span class="detail-label">Статус заморожен:</span>
+              <va-chip 
+                :color="selectedSubscription.is_status_frozen ? 'info' : 'secondary'" 
+                size="small"
+              >
+                {{ selectedSubscription.is_status_frozen ? 'Да' : 'Нет' }}
+              </va-chip>
+            </div>
+          </div>
         </div>
 
         <!-- Комментарий -->
         <div v-if="selectedSubscription.comment" class="subscription-comment">
+          <va-textarea v-if="isEditingSubscription" v-model="selectedSubscription.comment" label="Комментарий" rows="3" />
           <h4>Комментарий</h4>
           <p>{{ selectedSubscription.comment }}</p>
         </div>
@@ -218,8 +260,14 @@
           <va-button preset="secondary" @click="showViewModal = false">
             Закрыть
           </va-button>
-          <va-button @click="editSubscription(selectedSubscription)">
+          <va-button v-if="!isEditingSubscription" @click="editSubscription(selectedSubscription)">
             Редактировать
+          </va-button>
+          <va-button 
+            v-else
+            @click="handleSaveSubscription"
+          >
+            Сохранить
           </va-button>
         </div>
       </template>
@@ -265,6 +313,7 @@ const currentPage = ref(1)
 // Модальные окна
 const showViewModal = ref(false)
 const selectedSubscription = ref(null)
+const isEditingSubscription = ref(false)
 
 // Опции фильтров
 const statusFilters = [
@@ -278,6 +327,15 @@ const serviceOptions = computed(() => {
   return [
     { $id: '', name: 'Все сервисы' },
     ...(services.value || [])
+  ]
+})
+
+const allSubscriptionStates = computed(() => {
+  return [
+    { text: 'Активна', value: 'active' },
+    { text: 'Истекает', value: 'expiring_soon' },
+    { text: 'Просрочена', value: 'overdue' },
+    { text: 'Ожидает оплаты', value: 'awaiting_payment' },
   ]
 })
 
@@ -403,13 +461,32 @@ function isExpiringSoon(dateString) {
 }
 
 function viewSubscription(subscription) {
-  selectedSubscription.value = subscription
+  selectedSubscription.value = { ...subscription } // Создаем копию для редактирования
+  isEditingSubscription.value = false // По умолчанию режим просмотра
   showViewModal.value = true
 }
 
 function editSubscription(subscription) {
-  // TODO: Реализовать редактирование подписки
-  console.log('Edit subscription:', subscription)
+  selectedSubscription.value = { ...subscription } // Создаем копию для редактирования
+  isEditingSubscription.value = true // Включаем режим редактирования
+  showViewModal.value = true
+}
+
+async function handleSaveSubscription() {
+  if (!selectedSubscription.value) return
+
+  try {
+    await updateSubscription({
+      id: selectedSubscription.value.$id,
+      state: selectedSubscription.value.state,
+      is_status_frozen: selectedSubscription.value.is_status_frozen,
+      comment: selectedSubscription.value.comment,
+    })
+    isEditingSubscription.value = false // Возвращаемся в режим просмотра
+  } catch (error) {
+    console.error('Ошибка при обновлении подписки:', error)
+    alert(`Ошибка при обновлении подписки: ${error.message || 'Неизвестная ошибка'}`)
+  }
 }
 
 async function renewSubscription(subscription) {
