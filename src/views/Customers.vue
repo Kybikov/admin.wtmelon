@@ -24,7 +24,8 @@
             <va-icon name="search" size="18px" />
           </template>
         </va-input>
-        <div>
+        
+        <div class="status-filters">
           <span class="filter-label">Статус:</span>
           <va-button 
             v-for="filter in statusFilters" 
@@ -799,7 +800,7 @@ function handleCustomerSuccess() {
 }
 
 .filter-select {
-  min-width: 200px;
+  min-width: 2000px;
 }
 
 .status-filters {
