@@ -587,6 +587,11 @@ function hasContactInfo(customer) {
 }
 
 function viewCustomer(customer) {
+  if (!customer || !customer.$id) {
+    console.error('Invalid customer data:', customer)
+    return
+  }
+  
   selectedCustomer.value = customer
   showViewModal.value = true
   
@@ -633,6 +638,11 @@ function createSubscriptionForCustomer(customer) {
 }
 
 async function toggleCustomerStatus(customer) {
+  if (!customer || !customer.$id) {
+    console.error('Customer or customer ID is missing')
+    return
+  }
+  
   updatingStatus.value = true
   try {
     const newStatus = customer.status === 'active' ? 'inactive' : 'active'
@@ -643,7 +653,9 @@ async function toggleCustomerStatus(customer) {
     
     // Обновляем локальные данные
     customer.status = newStatus
-    selectedCustomer.value.status = newStatus
+    if (selectedCustomer.value) {
+      selectedCustomer.value.status = newStatus
+    }
   } catch (error) {
     console.error('Ошибка обновления статуса клиента:', error)
   } finally {
