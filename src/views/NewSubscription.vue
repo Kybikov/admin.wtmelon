@@ -188,6 +188,8 @@
             v-model="subscriptionForm.paymentMethod"
             label="Способ оплаты *"
             :options="paymentMethods"
+            text-by="text"
+            value-by="value"
             :rules="[v => !!v || 'Способ оплаты обязателен']"
             class="form-input"
           />
@@ -262,7 +264,7 @@
               </div>
               <div class="detail-row">
                 <span>Способ оплаты:</span>
-                <span>{{ subscriptionForm.paymentMethod }}</span>
+                <span>{{ getPaymentMethodText(subscriptionForm.paymentMethod) }}</span>
               </div>
             </div>
           </div>
@@ -387,10 +389,10 @@ const periodOptions = [
 ]
 
 const paymentMethods = [
-  'card',
-  'cash',
-  'crypto',
-  'bank_transfer'
+  { text: 'Карта', value: 'card' },
+  { text: 'Наличные', value: 'cash' },
+  { text: 'Криптовалюта', value: 'crypto' },
+  { text: 'Банковский перевод', value: 'bank_transfer' }
 ]
 
 // Доступные аккаунты для выбранного сервиса
@@ -438,7 +440,7 @@ const canProceed = computed(() => {
     case 4:
       return !!subscriptionForm.period_months && 
              !!subscriptionForm.sell_price && 
-             !!subscriptionForm.paymentMethod
+             true // Убираем проверку paymentMethod так как поле не обязательное
     default:
       return true
   }
@@ -449,7 +451,6 @@ const canCreate = computed(() => {
          !!selectedService.value && 
          !!subscriptionForm.period_months && 
          !!subscriptionForm.sell_price && 
-         !!subscriptionForm.paymentMethod &&
          (selectedPlanType.value !== 'membership' || !!selectedAccount.value)
 })
 
@@ -487,6 +488,10 @@ function formatCurrency(amount) {
   }).format(amount)
 }
 
+function getPaymentMethodText(value) {
+  const method = paymentMethods.find(m => m.value === value)
+  return method?.text || value
+}
 function selectCustomer(customer) {
   selectedCustomer.value = customer
 }
@@ -542,7 +547,6 @@ async function createSubscription() {
       quantity: subscriptionForm.quantity,
       cost_price: subscriptionForm.cost_price,
       sell_price: subscriptionForm.sell_price,
-      paymentMethod: subscriptionForm.paymentMethod,
       comment: subscriptionForm.comment,
       customers_idx: selectedCustomer.value.name
     }
