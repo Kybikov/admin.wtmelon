@@ -1,4 +1,4 @@
-import { Client, Account, Databases } from 'appwrite'
+import { Client, Account, Databases, Teams } from 'appwrite'
 
 const client = new Client()
     .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
@@ -6,6 +6,7 @@ const client = new Client()
 
 export const account = new Account(client)
 export const db = new Databases(client)
+export const teams = new Teams(client)
 
 export const cfg = {
     dbId: import.meta.env.VITE_APPWRITE_DATABASE,

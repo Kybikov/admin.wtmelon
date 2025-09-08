@@ -220,6 +220,16 @@ function getServiceRevenue(serviceId) {
   return revenue.toLocaleString('ru-RU')
 }
 
+function getManagerName(managerId) {
+  if (!managerId) return 'Не указан'
+  // TODO: Интегрировать с Appwrite Teams API для получения реального имени менеджера
+  // const teams = new Teams(client);
+  // const managers = await teams.listMemberships('manager_team_id');
+  // const manager = managers.memberships.find(m => m.userId === managerId);
+  // return manager ? manager.userName : `Менеджер ${managerId.slice(-6)}`;
+  return `Менеджер ${managerId.slice(-6)}`
+}
+
 function getStatusColor(state) {
   const colors = {
     'active': 'success',
