@@ -764,3 +764,4 @@ function handleCustomerSuccess() {
     justify-content: center;
   }
 }
+</style>
