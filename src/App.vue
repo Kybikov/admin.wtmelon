@@ -130,12 +130,18 @@ let authCheckPromise = null
 function toggleTheme() {
   const newTheme = currentPresetName.value === 'dark' ? 'light' : 'dark'
   applyPreset(newTheme)
+  localStorage.setItem('appTheme', newTheme)
 }
 
 // Проверяем авторизацию при загрузке
 onMounted(async () => {
   authCheckPromise = new Promise(async (resolve) => {
     try {
+      // Загружаем сохраненную тему из localStorage
+      const savedTheme = localStorage.getItem('appTheme')
+      if (savedTheme) {
+        applyPreset(savedTheme)
+      }
       await account.get()
       isAuthenticated.value = true
       // Если находимся на странице логина, перенаправляем на дашборд
