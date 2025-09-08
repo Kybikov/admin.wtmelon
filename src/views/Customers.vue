@@ -24,8 +24,7 @@
             <va-icon name="search" size="18px" />
           </template>
         </va-input>
-
-        <div class="status-filters">
+        <div>
           <span class="filter-label">Статус:</span>
           <va-button 
             v-for="filter in statusFilters" 
