@@ -40,6 +40,8 @@
             v-model="form.contact_type"
             label="Тип контакта"
             :options="contactTypeOptions"
+            text-by="text"
+            value-by="value"
           />
           <va-input 
             v-model="form.contact_handle" 
@@ -163,13 +165,13 @@ const errors = reactive({
 })
 
 const contactTypeOptions = [
-  'telegram',
-  'instagram',
-  'facebook',
-  'whatsapp',
-  'phone',
-  'Other',
-  'discord'
+  { text: 'Telegram', value: 'telegram' },
+  { text: 'Instagram', value: 'instagram' },
+  { text: 'Facebook', value: 'facebook' },
+  { text: 'WhatsApp', value: 'whatsapp' },
+  { text: 'Телефон', value: 'phone' },
+  { text: 'Другое', value: 'Other' },
+  { text: 'Discord', value: 'discord' }
 ]
 
 const countryOptions = computed(() => regions.value || [])
@@ -211,8 +213,8 @@ watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
     console.log('Customer ID:', customer.$id)
     Object.assign(form, {
       name: customer.name || '',
-      country: customer.regions_id || '',
-      contact_type: customer.contact_type || 'Telegram',
+      country: customer.regions_id || customer.country || '',
+      contact_type: customer.contact_type || 'telegram',
       contact_url: customer.contact_url || '',
       contact_handle: customer.contact_handle || '',
       phone: customer.phone || '',

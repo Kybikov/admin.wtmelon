@@ -611,7 +611,6 @@ function editCustomer(customer) {
   console.log('Setting isEditMode to:', isEditMode.value)
   console.log('selectedCustomer set to:', selectedCustomer.value)
   showCreateModal.value = true
-  showViewModal.value = false
   
   // Добавляем небольшую задержку чтобы убедиться что пропсы переданы
   setTimeout(() => {
@@ -679,22 +678,25 @@ async function deleteCustomer(customer) {
 
 function closeViewModal() {
   showViewModal.value = false
-  selectedCustomer.value = null
   customerIdForModal.value = null
+  
+  // Только сбрасываем selectedCustomer если не в режиме редактирования
+  if (!isEditMode.value) {
+    selectedCustomer.value = null
+  }
 }
 
 function handleCustomerSuccess() {
   showCreateModal.value = false
   
-  // Закрываем модальное окно просмотра если оно открыто
-  if (showViewModal.value) {
-    showViewModal.value = false
-  }
-  
   // Сбрасываем состояние после небольшой задержки
   setTimeout(() => {
     selectedCustomer.value = null
     isEditMode.value = false
+    // Закрываем модальное окно просмотра если оно открыто
+    if (showViewModal.value) {
+      showViewModal.value = false
+    }
   }, 100)
 }
 </script>
