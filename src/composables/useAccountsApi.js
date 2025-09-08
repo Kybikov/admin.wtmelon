@@ -10,10 +10,6 @@ async function listAccounts() {
     return res.documents
 }
 
-async function createAccount(payload) {
-    return await db.createDocument(cfg.dbId, cfg.accounts, ID.unique(), payload)
-}
-
 // Получение аккаунтов по сервису
 async function getAccountsByService(serviceId) {
     const res = await db.listDocuments(cfg.dbId, cfg.accounts, [
