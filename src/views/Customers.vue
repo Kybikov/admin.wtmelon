@@ -432,12 +432,13 @@ const countryFilterOptions = computed(() => {
 const contactTypeFilterOptions = computed(() => {
   return [
     { value: '', text: 'Все типы связи' },
-    { value: 'Telegram', text: 'Telegram' },
-    { value: 'WhatsApp', text: 'WhatsApp' },
-    { value: 'Discord', text: 'Discord' },
-    { value: 'Email', text: 'Email' },
-    { value: 'Телефон', text: 'Телефон' },
-    { value: 'Другое', text: 'Другое' }
+    { value: 'telegram', text: 'Telegram' },
+    { value: 'instagram', text: 'Instagram' },
+    { value: 'facebook', text: 'Facebook' },
+    { value: 'whatsapp', text: 'WhatsApp' },
+    { value: 'phone', text: 'Телефон' },
+    { value: 'Other', text: 'Другое' },
+    { value: 'discord', text: 'Discord' }
   ]
 })
 
@@ -523,7 +524,15 @@ function getServiceName(serviceId) {
 function getContactTypeText(contactType) {
   const types = {
     'telegram': 'Telegram',
-    'whatsapp': 'WhatsApp', 
+    'instagram': 'Instagram',
+    'facebook': 'Facebook',
+    'whatsapp': 'WhatsApp',
+    'phone': 'Телефон',
+    'Other': 'Другое',
+    'discord': 'Discord'
+  }
+  return types[contactType] || contactType
+}
     'instagram': 'Instagram',
     'facebook': 'Facebook',
     'discord': 'Discord',

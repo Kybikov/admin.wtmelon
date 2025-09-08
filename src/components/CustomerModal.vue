@@ -129,7 +129,7 @@ const loading = computed(() => creating.value || updating.value)
 const form = reactive({
   name: '',
   country: '',
-  contact_type: 'Telegram',
+  contact_type: 'telegram',
   contact_url: '',
   contact_handle: '',
   phone: '',
@@ -143,12 +143,13 @@ const errors = reactive({
 })
 
 const contactTypeOptions = [
-  'Telegram',
-  'WhatsApp', 
-  'Discord',
-  'Email',
-  'Телефон',
-  'Другое'
+  'telegram',
+  'instagram',
+  'facebook',
+  'whatsapp',
+  'phone',
+  'Other',
+  'discord'
 ]
 
 const countryOptions = computed(() => regions.value || [])
@@ -175,7 +176,7 @@ function resetForm() {
   Object.assign(form, {
     name: '',
     country: '',
-    contact_type: 'Telegram',
+    contact_type: 'telegram',
     contact_url: '',
     contact_handle: '',
     phone: '',
