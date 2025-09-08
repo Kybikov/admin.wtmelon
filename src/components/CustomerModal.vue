@@ -4,62 +4,87 @@
     :title="isEdit ? 'Редактировать клиента' : 'Добавить клиента'"
     size="large"
     @close="handleClose"
-    :ok-text="isEdit ? 'Сохранить' : 'Создать'"
-    :cancel-text="'Отмена'"
-    @ok="handleSubmit"
-    @cancel="handleClose"
-    :disable-ok="!form.name || loading"
-    :loading="loading"
+    hide-default-actions
   >
     <div class="customer-form">
-      <div class="form-row">
-        <va-input 
-          v-model="form.name" 
-          label="Имя клиента *" 
-          :rules="[v => !!v || 'Имя обязательно']"
-          :error="!!errors.name"
-          :error-messages="errors.name ?? null"
-          class="form-input"
-        />
-        <va-select
-          v-model="form.country"
-          label="Страна"
-          :options="countryOptions"
-          text-by="name"
-          value-by="$id"
-          class="form-input"
-        />
+      <!-- Основная информация -->
+      <div class="form-section">
+        <h4 class="section-title">Основная информация</h4>
+        <div class="form-row">
+          <va-input 
+            v-model="form.name" 
+            label="Имя клиента *" 
+            :rules="[v => !!v || 'Имя обязательно']"
+            :error="!!errors.name"
+            :error-messages="errors.name ?? null"
+            class="form-input"
+            outline
+          />
+          <va-select
+            v-model="form.country"
+            label="Страна"
+            :options="countryOptions"
+            text-by="name"
+            value-by="$id"
+            class="form-input"
+            outline
+          />
+        </div>
       </div>
       
-      <div class="form-row">
-        <va-select
-          v-model="form.contact_type"
-          label="Тип контакта"
-          :options="contactTypes"
-          class="form-input"
-        />
+      <!-- Контактная информация -->
+      <div class="form-section">
+        <h4 class="section-title">Контактная информация</h4>
+        <div class="form-row">
+          <va-select
+            v-model="form.contact_type"
+            label="Тип контакта"
+            :options="contactTypeOptions"
+            class="form-input"
+            outline
+          />
+          <va-input 
+            v-model="form.contact_handle" 
+            label="Контакт" 
+            class="form-input"
+            outline
+          />
+        </div>
+        
+        <div class="form-row">
+          <va-input 
+            v-model="form.phone" 
+            label="Телефон" 
+            class="form-input"
+            outline
+          />
+          <va-input 
+            v-model="form.contact_url" 
+            label="URL профиля" 
+            class="form-input"
+            outline
+          />
+        </div>
       </div>
 
-      <div class="form-row">
-        <va-select
-          v-model="form.phone" 
-          label="Телефон" 
+      <!-- Дополнительная информация -->
+      <div class="form-section">
+        <h4 class="section-title">Дополнительная информация</h4>
+        <va-textarea 
+          v-model="form.comment" 
+          label="Комментарий"
+          rows="3"
           class="form-input"
+          outline
+        />
+        
+        <va-input 
+          v-model="form.tags" 
+          label="Теги (через запятую)"
+          class="form-input"
+          outline
         />
       </div>
-
-      <va-textarea 
-        v-model="form.comment" 
-        label="Комментарий"
-        rows="3"
-        class="form-input"
-      />
-
-      <va-input 
-        v-model="form.tags" 
-        label="Теги (через запятую)"
-        class="form-input"
-      />
     </div>
 
     <template #footer>
@@ -119,13 +144,13 @@ const errors = reactive({
   name: null
 })
 
-const contactTypes = [
-  'telegram',
-  'whatsapp',
-  'discord',
-  'email',
-  'phone',
-  'other'
+const contactTypeOptions = [
+  { text: 'Telegram', value: 'telegram' },
+  { text: 'WhatsApp', value: 'whatsapp' },
+  { text: 'Discord', value: 'discord' },
+  { text: 'Email', value: 'email' },
+  { text: 'Телефон', value: 'phone' },
+  { text: 'Другое', value: 'other' }
 ]
 
 const countryOptions = computed(() => regions.value || [])
@@ -209,6 +234,21 @@ async function handleSubmit() {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--va-primary);
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--va-background-element);
 }
 
 .form-row {
