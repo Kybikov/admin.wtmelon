@@ -37,6 +37,11 @@
           label="Тип контакта"
           :options="contactTypes"
           class="form-input"
+        />
+      </div>
+
+      <div class="form-row">
+        <va-select
           v-model="form.phone" 
           label="Телефон" 
           class="form-input"
