@@ -140,7 +140,7 @@
           </div>
           <div class="financial-item">
             <span class="financial-label">Создал:</span>
-            <span class="financial-value">{{ account.manager_id ? `Менеджер ${account.manager_id.slice(-6)}` : 'Не указан' }}</span>
+            <span class="financial-value">{{ getManagerName(account.manager_id) }}</span>
           </div>
         </div>
       </div>
@@ -169,6 +169,14 @@ import { useAccountSeats, useFreeSeat, useDeleteAccount } from '@/composables/us
 import { useRegions } from '@/composables/useAppwriteCollections'
 import { useCustomers } from '@/composables/useCustomersApi'
 import { useServices } from '@/composables/useServicesApi'
+
+// Список менеджеров
+const managers = [
+  { id: 'bogdan', name: 'Bogdan' },
+  { id: 'amir', name: 'Amir' },
+  { id: 'vadim', name: 'Vadim' },
+  { id: 'test', name: 'Test' }
+]
 
 const props = defineProps({
   modelValue: Boolean,
@@ -231,6 +239,13 @@ function getServiceName(serviceId) {
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
   return region?.name || 'Неизвестно'
+}
+
+function getManagerName(managerId) {
+  if (!managerId) return 'Не указан'
+  
+  const manager = managers.find(m => m.id === managerId)
+  return manager ? manager.name : `Менеджер ${managerId.slice(-6)}`
 }
 
 function formatCurrency(amount) {
