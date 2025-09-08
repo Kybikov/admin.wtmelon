@@ -4,6 +4,12 @@
     :title="isEdit ? 'Редактировать клиента' : 'Добавить клиента'"
     size="large"
     @close="handleClose"
+    :ok-text="isEdit ? 'Сохранить' : 'Создать'"
+    :cancel-text="'Отмена'"
+    @ok="handleSubmit"
+    @cancel="handleClose"
+    :disable-ok="!form.name || loading"
+    :loading="loading"
   >
     <div class="customer-form">
       <div class="form-row">
@@ -31,21 +37,6 @@
           label="Тип контакта"
           :options="contactTypes"
           class="form-input"
-        />
-        <va-input 
-          v-model="form.contact_url" 
-          label="Контакт (ссылка/username)" 
-          class="form-input"
-        />
-      </div>
-
-      <div class="form-row">
-        <va-input 
-          v-model="form.contact_handle" 
-          label="Handle/Username" 
-          class="form-input"
-        />
-        <va-input 
           v-model="form.phone" 
           label="Телефон" 
           class="form-input"
