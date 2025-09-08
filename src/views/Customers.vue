@@ -507,8 +507,9 @@ function getContactTypeText(contactType) {
   const types = {
     'Telegram': 'Telegram',
     'WhatsApp': 'WhatsApp',
+    'Instagram': 'instagram',
+    'Facebook': 'facebook',
     'Discord': 'Discord',
-    'Email': 'Email',
     'Phone': 'Телефон',
     'Other': 'Другое'
   }
