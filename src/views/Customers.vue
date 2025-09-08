@@ -612,7 +612,9 @@ function getSubscriptionStatusColor(state) {
     'active': 'success',
     'expiring_soon': 'warning',
     'overdue': 'danger',
-    'awaiting_payment': 'info'
+    'awaiting_payment': 'info',
+    'cancelled': 'secondary',
+    'gift': 'warning'
   }
   return colors[state] || 'secondary'
 }
@@ -622,7 +624,9 @@ function getSubscriptionStatusText(state) {
     'active': 'Активна',
     'expiring_soon': 'Истекает',
     'overdue': 'Просрочена',
-    'awaiting_payment': 'Ожидает оплаты'
+    'awaiting_payment': 'Ожидает оплаты',
+    'cancelled': 'Отменена',
+    'gift': 'Подарочная'
   }
   return texts[state] || state
 }

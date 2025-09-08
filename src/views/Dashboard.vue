@@ -55,7 +55,7 @@
             <va-icon name="schedule" size="24px" />
           </div>
           <div class="metric-info">
-            <div class="metric-label">ИСТЕКАЕТ В 3 ДНЯ</div>
+            <div class="stat-value">{{ expiringSubscriptions?.length || 0 }}</div>
             <div class="metric-value">{{ subscriptionsStats?.expiring || 0 }}</div>
             <div class="metric-change negative">Требуют внимания</div>
           </div>
@@ -69,7 +69,7 @@
           </div>
           <div class="metric-info">
             <div class="metric-label">ПРОСРОЧЕНО</div>
-            <div class="metric-value">{{ subscriptionsStats?.overdue || 0 }}</div>
+            <div class="stat-value">{{ overdueSubscriptions?.length || 0 }}</div>
             <div class="metric-change negative">Критично</div>
           </div>
         </div>
@@ -224,8 +224,10 @@ function getStatusColor(state) {
   const colors = {
     'active': 'success',
     'expiring_soon': 'warning',
-    'overdue': 'danger',
-    'awaiting_payment': 'info'
+    'overdue': 'danger', 
+    'awaiting_payment': 'info',
+    'cancelled': 'secondary',
+    'gift': 'warning'
   }
   return colors[state] || 'secondary'
 }
@@ -235,7 +237,9 @@ function getStatusText(state) {
     'active': 'Активна',
     'expiring_soon': 'Истекает',
     'overdue': 'Просрочена',
-    'awaiting_payment': 'Ожидает оплаты'
+    'awaiting_payment': 'Ожидает оплаты',
+    'cancelled': 'Отменена',
+    'gift': 'Подарочная'
   }
   return texts[state] || state
 }

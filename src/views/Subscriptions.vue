@@ -226,8 +226,29 @@
               <span class="detail-label">Цена продажи:</span>
               <span class="detail-value">{{ formatCurrency(selectedSubscription.sell_price) }}</span>
             </div>
+            <div class="detail-item">
+              <span class="detail-label">Менеджер:</span>
+              <span class="detail-value">{{ getManagerName(selectedSubscription.manager_id) }}</span>
+            </div>
           </div>
 
+          <div class="form-row mt-3">
+            <va-checkbox
+              v-if="isEditingSubscription"
+              v-model="selectedSubscription.is_status_frozen"
+              label="Заморозить статус (не менять автоматически)"
+              class="form-input"
+            />
+            <div v-else class="detail-item" style="width: 100%; justify-content: flex-start; gap: 10px;">
+              <span class="detail-label">Статус заморожен:</span>
+              <va-chip 
+                :color="selectedSubscription.is_status_frozen ? 'info' : 'secondary'" 
+                size="small"
+              >
+                {{ selectedSubscription.is_status_frozen ? 'Да' : 'Нет' }}
+              </va-chip>
+            </div>
+          </div>
           <div class="form-row mt-3">
             <va-checkbox
               v-if="isEditingSubscription"
@@ -248,10 +269,16 @@
         </div>
 
         <!-- Комментарий -->
-        <div v-if="selectedSubscription.comment" class="subscription-comment">
-          <va-textarea v-if="isEditingSubscription" v-model="selectedSubscription.comment" label="Комментарий" rows="3" />
+        <div class="subscription-comment">
           <h4>Комментарий</h4>
-          <p>{{ selectedSubscription.comment }}</p>
+          <va-textarea 
+            v-if="isEditingSubscription" 
+            v-model="selectedSubscription.comment" 
+            label="Комментарий" 
+            rows="3" 
+          />
+          <p v-else-if="selectedSubscription.comment">{{ selectedSubscription.comment }}</p>
+          <p v-else class="no-comment">Комментарий не добавлен</p>
         </div>
       </div>
 
@@ -260,11 +287,15 @@
           <va-button preset="secondary" @click="showViewModal = false">
             Закрыть
           </va-button>
-          <va-button v-if="!isEditingSubscription" @click="editSubscription(selectedSubscription)">
+          <va-button 
+            v-if="!isEditingSubscription" 
+            @click="isEditingSubscription = true"
+          >
             Редактировать
           </va-button>
           <va-button 
             v-else
+            :loading="updatingSubscription"
             @click="handleSaveSubscription"
           >
             Сохранить
@@ -300,7 +331,7 @@ const { data: subscriptions, isLoading } = useSubscriptions()
 const { data: customers } = useCustomers()
 const { data: services } = useServices()
 const { data: plans } = usePlans()
-const { mutateAsync: updateSubscription } = useUpdateSubscription()
+const { mutateAsync: updateSubscription, isLoading: updatingSubscription } = useUpdateSubscription()
 
 // Состояние фильтров
 const searchQuery = ref('')
@@ -320,7 +351,9 @@ const statusFilters = [
   { label: 'Активные', value: 'active', color: 'success' },
   { label: 'Истекающие', value: 'expiring_soon', color: 'warning' },
   { label: 'Просроченные', value: 'overdue', color: 'danger' },
-  { label: 'Ожидают оплаты', value: 'awaiting_payment', color: 'info' }
+  { label: 'Ожидают оплаты', value: 'awaiting_payment', color: 'info' },
+  { label: 'Отменённые', value: 'cancelled', color: 'secondary' },
+  { label: 'Подарочные', value: 'gift', color: 'warning' }
 ]
 
 const serviceOptions = computed(() => {
@@ -336,6 +369,8 @@ const allSubscriptionStates = computed(() => {
     { text: 'Истекает', value: 'expiring_soon' },
     { text: 'Просрочена', value: 'overdue' },
     { text: 'Ожидает оплаты', value: 'awaiting_payment' },
+    { text: 'Отменена', value: 'cancelled' },
+    { text: 'Подарочная', value: 'gift' }
   ]
 })
 
@@ -424,7 +459,9 @@ function getStatusColor(state) {
     'active': 'success',
     'expiring_soon': 'warning',
     'overdue': 'danger',
-    'awaiting_payment': 'info'
+    'awaiting_payment': 'info',
+    'cancelled': 'secondary',
+    'gift': 'warning'
   }
   return colors[state] || 'secondary'
 }
@@ -434,9 +471,16 @@ function getStatusText(state) {
     'active': 'Активна',
     'expiring_soon': 'Истекает',
     'overdue': 'Просрочена',
-    'awaiting_payment': 'Ожидает оплаты'
+    'awaiting_payment': 'Ожидает оплаты',
+    'cancelled': 'Отменена',
+    'gift': 'Подарочная'
   }
   return texts[state] || state
+}
+
+function getManagerName(managerId) {
+  // TODO: Получить имя менеджера по ID из системы пользователей Appwrite
+  return managerId ? `Менеджер ${managerId.slice(-4)}` : 'Не указан'
 }
 
 function formatDate(dateString) {
@@ -723,6 +767,12 @@ function closeViewModal() {
   color: var(--va-text-primary);
   line-height: 1.5;
   margin: 0;
+}
+
+.no-comment {
+  font-style: italic;
+  color: var(--va-text-secondary) !important;
+  opacity: 0.7;
 }
 
 .modal-footer {

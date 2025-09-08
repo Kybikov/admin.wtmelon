@@ -15,7 +15,7 @@
         </div>
         <p>Выручка, прибыль, расходы и финансовые показатели</p>
         <div class="report-actions">
-          <va-button size="small" preset="secondary">Скоро</va-button>
+          <va-button size="small" @click="$router.push('/reports/revenue')">Открыть</va-button>
         </div>
       </va-card>
 
@@ -28,7 +28,7 @@
         </div>
         <p>Анализ клиентов, сегментация и поведенческие метрики</p>
         <div class="report-actions">
-          <va-button size="small" preset="secondary">Скоро</va-button>
+          <va-button size="small" @click="$router.push('/reports/customers')">Открыть</va-button>
         </div>
       </va-card>
 
@@ -41,7 +41,7 @@
         </div>
         <p>Отчеты по продажам, конверсии и эффективности</p>
         <div class="report-actions">
-          <va-button size="small" preset="secondary">Скоро</va-button>
+          <va-button size="small" @click="$router.push('/reports/sales')">Открыть</va-button>
         </div>
       </va-card>
 
@@ -54,7 +54,7 @@
         </div>
         <p>Анализ популярности продуктов и подписок</p>
         <div class="report-actions">
-          <va-button size="small" preset="secondary">Скоро</va-button>
+          <va-button size="small" @click="$router.push('/reports/services')">Открыть</va-button>
         </div>
       </va-card>
     </div>

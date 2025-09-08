@@ -43,14 +43,22 @@ async function getExpiringSubscriptions(days = 3) {
 
 // Создание подписки
 async function createSubscription(payload) {
+    // Добавляем manager_id из текущего пользователя
+    try {
+        const currentUser = await account.get()
+        payload.manager_id = currentUser.$id
+    } catch (error) {
+        console.warn('Не удалось получить текущего пользователя:', error)
+    }
+    
     // Если это membership подписка, создаем место в аккаунте
     if (payload.accounts_id) {
-        // Проверяем доступность мест
-        const account = await db.getDocument(cfg.dbId, cfg.accounts, payload.accounts_id)
+        // Проверяем доступность мест - считаем только занятые места
         const occupiedSeats = await db.listDocuments(cfg.dbId, cfg.account_seats, [
             Query.equal('accounts_id', payload.accounts_id)
         ])
         
+        const account = await db.getDocument(cfg.dbId, cfg.accounts, payload.accounts_id)
         const occupiedCount = occupiedSeats.documents.length
         const maxSeats = account.max_seats || 0
         
@@ -58,12 +66,12 @@ async function createSubscription(payload) {
             throw new Error('В этом аккаунте нет свободных мест')
         }
         
-        // Создаем новое место для клиента
+        // Создаем новое место для клиента с автоматической нумерацией
         const newSeat = await db.createDocument(cfg.dbId, cfg.account_seats, ID.unique(), {
             accounts_id: payload.accounts_id,
             customers_id: payload.customers_id,
             is_occupied: true,
-            seat_number: occupiedCount + 1 // Присваиваем номер места
+            seat_number: occupiedCount + 1
         })
         
         // Обновляем счетчик занятых мест в аккаунте
@@ -77,15 +85,6 @@ async function createSubscription(payload) {
     
     // Создаем подписку
     const subscription = await db.createDocument(cfg.dbId, cfg.subscriptions, ID.unique(), payload)
-    
-    // Обновляем статистику клиента
-    if (payload.sell_price) {
-        const customer = await db.getDocument(cfg.dbId, cfg.customers, payload.customers_id)
-        await db.updateDocument(cfg.dbId, cfg.customers, payload.customers_id, {
-            total_spent: (customer.total_spent || 0) + payload.sell_price,
-            total_purchases: (customer.total_purchases || 0) + 1
-        })
-    }
     
     return subscription
 }

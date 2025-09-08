@@ -123,6 +123,7 @@
 import { ref, computed } from 'vue'
 import { useAccountSeats, useFreeSeat } from '@/composables/useAccountsApi'
 import { useRegions, useCurrencies } from '@/composables/useAppwriteCollections'
+import { useCustomers } from '@/composables/useCustomersApi'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -138,12 +139,39 @@ const isVisible = computed({
 
 const { data: regions } = useRegions()
 const { data: currencies } = useCurrencies()
+const { data: customers } = useCustomers()
 const { data: seats, isLoading: seatsLoading } = useAccountSeats(
   computed(() => props.account?.$id)
 )
 const { mutateAsync: freeSeat, isLoading: freeing } = useFreeSeat()
 
 const freeingSeat = ref(null)
+
+// Вычисляемые свойства для работы с местами
+const occupiedSeats = computed(() => {
+  return seats.value?.filter(seat => seat.is_occupied) || []
+})
+
+const availableSeats = computed(() => {
+  const maxSeats = props.account?.max_seats || 0
+  const occupiedCount = occupiedSeats.value.length
+  return Math.max(0, maxSeats - occupiedCount)
+})
+
+const canAddMoreSeats = computed(() => {
+  return availableSeats.value > 0
+})
+
+const seatsProgress = computed(() => {
+  const maxSeats = props.account?.max_seats || 1
+  const occupiedCount = occupiedSeats.value.length
+  return (occupiedCount / maxSeats) * 100
+})
+
+function getCustomerName(customerId) {
+  const customer = customers.value?.find(c => c.$id === customerId)
+  return customer?.name || 'Неизвестный клиент'
+}
 
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
@@ -244,6 +272,51 @@ async function handleFreeSeat(seat) {
   font-size: 16px;
   font-weight: 600;
   color: var(--va-text-primary);
+}
+
+.seats-info {
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-background-element);
+  margin-bottom: 16px;
+}
+
+.seats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seats-count {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-progress {
+  width: 100%;
+}
+
+.seats-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seats-list h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.add-seat-section {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 2px dashed var(--va-background-element);
 }
 
 .loading-seats {

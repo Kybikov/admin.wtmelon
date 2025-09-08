@@ -11,6 +11,7 @@ import Products from '@/views/Products.vue'
 import Orders from '@/views/Orders.vue'
 import Reports from '@/views/Reports.vue'
 import Settings from '@/views/Settings.vue'
+import ManagerRevenue from '@/views/Reports/ManagerRevenue.vue'
 
 export default [
     // Страница логина (доступна всем)
@@ -89,6 +90,12 @@ export default [
         path: '/reports',
         name: 'reports',
         component: Reports,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/reports/revenue',
+        name: 'manager-revenue',
+        component: ManagerRevenue,
         meta: { requiresAuth: true }
     },
     {

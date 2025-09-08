@@ -320,6 +320,7 @@ import { useServices } from '@/composables/useServicesApi'
 import { useAccountsByService } from '@/composables/useAccountsApi'
 import { useCreateSubscription } from '@/composables/useSubscriptionsApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
+import { account } from '@/appwrite/client'
 import CustomerModal from '@/components/CustomerModal.vue'
 
 const router = useRouter()
