@@ -21,6 +21,16 @@ async function getCustomerOrders(customerId) {
 
 // Создание заказа
 async function createOrder(payload) {
+    // Получаем текущего пользователя и добавляем его ID как manager_id
+    try {
+        const currentUser = await account.get()
+        payload.manager_id = currentUser.$id
+    } catch (error) {
+        console.warn('Не удалось получить текущего пользователя для manager_id:', error)
+        // Если не удалось получить пользователя, оставляем поле пустым
+        payload.manager_id = null
+    }
+    
     return await db.createDocument(cfg.dbId, cfg.orders, ID.unique(), payload)
 }
 

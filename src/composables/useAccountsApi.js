@@ -139,12 +139,13 @@ async function occupySeat(accountId, customerId) {
 
 // Создание аккаунта
 async function createAccount(payload) {
-    // Получаем текущего пользователя и добавляем его ID
+    // Получаем текущего пользователя и добавляем его ID как created_by
     try {
         const currentUser = await account.get()
         payload.created_by = currentUser.$id
     } catch (error) {
-        console.warn('Не удалось получить текущего пользователя:', error)
+        console.warn('Не удалось получить текущего пользователя для created_by:', error)
+        payload.created_by = null
     }
     
     // Устанавливаем начальные значения
