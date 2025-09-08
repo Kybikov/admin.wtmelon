@@ -54,13 +54,44 @@ async function freeSeat(seatId) {
 }
 
 // Занятие места
-async function occupySeat(seatId, customerId) {
-    return await db.updateDocument(cfg.dbId, cfg.account_seats, seatId, {
+async function occupySeat(accountId, customerId) {
+    // Создаем новую запись для занятого места
+    const newSeat = await db.createDocument(cfg.dbId, cfg.account_seats, ID.unique(), {
+        accounts_id: accountId,
         customers_id: customerId,
-        is_occupied: true
+        is_occupied: true,
+        seat_number: null // Будет установлено автоматически или позже
     })
+    
+    // Обновляем счетчик занятых мест в аккаунте
+    const account = await db.getDocument(cfg.dbId, cfg.accounts, accountId)
+    await db.updateDocument(cfg.dbId, cfg.accounts, accountId, {
+        seats_taken: (account.seats_taken || 0) + 1
+    })
+    
+    return newSeat
 }
 
+// Проверка доступности мест в аккаунте
+async function checkAvailableSeats(accountId) {
+    const [account, occupiedSeats] = await Promise.all([
+        db.getDocument(cfg.dbId, cfg.accounts, accountId),
+        db.listDocuments(cfg.dbId, cfg.account_seats, [
+            Query.equal('accounts_id', accountId)
+        ])
+    ])
+    
+    const occupiedCount = occupiedSeats.documents.length
+    const maxSeats = account.max_seats || 0
+    
+    return {
+        account,
+        occupiedCount,
+        maxSeats,
+        availableSeats: maxSeats - occupiedCount,
+        canAddMore: occupiedCount < maxSeats
+    }
+}
 // Хуки для работы с аккаунтами
 export function useAccounts() {
     return useQuery({
@@ -135,10 +166,16 @@ export function useFreeSeat() {
 export function useOccupySeat() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: ({ seatId, customerId }) => occupySeat(seatId, customerId),
+        mutationFn: ({ accountId, customerId }) => occupySeat(accountId, customerId),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['account-seats'] })
             qc.invalidateQueries({ queryKey: ['accounts'] })
         }
+    })
+}
+
+export function useCheckAvailableSeats() {
+    return useMutation({
+        mutationFn: checkAvailableSeats
     })
 }

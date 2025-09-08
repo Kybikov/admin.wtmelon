@@ -43,23 +43,40 @@ async function getExpiringSubscriptions(days = 3) {
 
 // Создание подписки
 async function createSubscription(payload) {
-    // Создаем подписку
-    const subscription = await db.createDocument(cfg.dbId, cfg.subscriptions, ID.unique(), payload)
-    
-    // Если это membership подписка, обновляем место в аккаунте
-    if (payload.account_seats_id) {
-        await db.updateDocument(cfg.dbId, cfg.account_seats, payload.account_seats_id, {
+    // Если это membership подписка, создаем место в аккаунте
+    if (payload.accounts_id) {
+        // Проверяем доступность мест
+        const account = await db.getDocument(cfg.dbId, cfg.accounts, payload.accounts_id)
+        const occupiedSeats = await db.listDocuments(cfg.dbId, cfg.account_seats, [
+            Query.equal('accounts_id', payload.accounts_id)
+        ])
+        
+        const occupiedCount = occupiedSeats.documents.length
+        const maxSeats = account.max_seats || 0
+        
+        if (occupiedCount >= maxSeats) {
+            throw new Error('В этом аккаунте нет свободных мест')
+        }
+        
+        // Создаем новое место для клиента
+        const newSeat = await db.createDocument(cfg.dbId, cfg.account_seats, ID.unique(), {
+            accounts_id: payload.accounts_id,
             customers_id: payload.customers_id,
-            is_occupied: true
+            is_occupied: true,
+            seat_number: occupiedCount + 1 // Присваиваем номер места
         })
         
-        // Обновляем счетчики в аккаунте
-        const account = await db.getDocument(cfg.dbId, cfg.accounts, payload.accounts_id)
+        // Обновляем счетчик занятых мест в аккаунте
         await db.updateDocument(cfg.dbId, cfg.accounts, payload.accounts_id, {
-            seats_taken: (account.seats_taken || 0) + 1,
-            seats_free: Math.max(0, (account.seats_free || account.max_seats) - 1)
+            seats_taken: occupiedCount + 1
         })
+        
+        // Добавляем ID созданного места в payload подписки
+        payload.account_seats_id = newSeat.$id
     }
+    
+    // Создаем подписку
+    const subscription = await db.createDocument(cfg.dbId, cfg.subscriptions, ID.unique(), payload)
     
     // Обновляем статистику клиента
     if (payload.sell_price) {
