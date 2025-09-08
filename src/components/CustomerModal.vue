@@ -40,8 +40,6 @@
             v-model="form.contact_type"
             label="Тип контакта"
             :options="contactTypeOptions"
-            class="form-input"
-            outline
           />
           <va-input 
             v-model="form.contact_handle" 
@@ -145,23 +143,23 @@ const errors = reactive({
 })
 
 const contactTypeOptions = [
-  { text: 'Telegram', value: 'telegram' },
-  { text: 'WhatsApp', value: 'whatsapp' },
-  { text: 'Discord', value: 'discord' },
-  { text: 'Email', value: 'email' },
-  { text: 'Телефон', value: 'phone' },
-  { text: 'Другое', value: 'other' }
+  'Telegram',
+  'WhatsApp', 
+  'Discord',
+  'Email',
+  'Телефон',
+  'Другое'
 ]
 
 const countryOptions = computed(() => regions.value || [])
 
 // Заполняем форму при редактировании
-watch(() => props.customer, (customer) => {
-  if (customer && props.isEdit) {
+watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
+  if (customer && isEdit) {
     Object.assign(form, {
       name: customer.name || '',
-      country: customer.regions_id || '',
-      contact_type: customer.contact_type || 'telegram',
+      country: customer.regions_id || customer.country || '',
+      contact_type: customer.contact_type || 'Telegram',
       contact_url: customer.contact_url || '',
       contact_handle: customer.contact_handle || '',
       phone: customer.phone || '',
@@ -169,6 +167,7 @@ watch(() => props.customer, (customer) => {
       tags: Array.isArray(customer.tags) ? customer.tags.join(', ') : (customer.tags || ''),
       status: customer.status || 'active'
     })
+    console.log('Form filled with customer data:', form)
   }
 }, { immediate: true })
 
@@ -176,7 +175,7 @@ function resetForm() {
   Object.assign(form, {
     name: '',
     country: '',
-    contact_type: 'telegram',
+    contact_type: 'Telegram',
     contact_url: '',
     contact_handle: '',
     phone: '',

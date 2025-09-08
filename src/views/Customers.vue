@@ -432,12 +432,12 @@ const countryFilterOptions = computed(() => {
 const contactTypeFilterOptions = computed(() => {
   return [
     { value: '', text: 'Все типы связи' },
-    { value: 'telegram', text: 'Telegram' },
-    { value: 'whatsapp', text: 'WhatsApp' },
-    { value: 'discord', text: 'Discord' },
-    { value: 'email', text: 'Email' },
-    { value: 'phone', text: 'Телефон' },
-    { value: 'other', text: 'Другое' }
+    { value: 'Telegram', text: 'Telegram' },
+    { value: 'WhatsApp', text: 'WhatsApp' },
+    { value: 'Discord', text: 'Discord' },
+    { value: 'Email', text: 'Email' },
+    { value: 'Телефон', text: 'Телефон' },
+    { value: 'Другое', text: 'Другое' }
   ]
 })
 
@@ -522,13 +522,14 @@ function getServiceName(serviceId) {
 
 function getContactTypeText(contactType) {
   const types = {
-    'telegram': 'Telegram',
-    'whatsapp': 'WhatsApp',
-    'instagram': 'Instagram',
-    'facebook': 'Facebook',
-    'discord': 'Discord',
-    'phone': 'Телефон',
-    'other': 'Другое'
+    'Telegram': 'Telegram',
+    'WhatsApp': 'WhatsApp', 
+    'Instagram': 'Instagram',
+    'Facebook': 'Facebook',
+    'Discord': 'Discord',
+    'Email': 'Email',
+    'Телефон': 'Телефон',
+    'Другое': 'Другое'
   }
   return types[contactType] || contactType
 }
@@ -601,6 +602,7 @@ function viewCustomer({ item: customer }) {
 }
 
 function editCustomer(customer) {
+  console.log('Editing customer:', customer)
   selectedCustomer.value = customer
   isEditMode.value = true
   showCreateModal.value = true
