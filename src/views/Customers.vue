@@ -522,14 +522,14 @@ function getServiceName(serviceId) {
 
 function getContactTypeText(contactType) {
   const types = {
-    'Telegram': 'Telegram',
-    'WhatsApp': 'WhatsApp', 
-    'Instagram': 'Instagram',
-    'Facebook': 'Facebook',
-    'Discord': 'Discord',
-    'Email': 'Email',
-    'Телефон': 'Телефон',
-    'Другое': 'Другое'
+    'telegram': 'Telegram',
+    'whatsapp': 'WhatsApp', 
+    'instagram': 'Instagram',
+    'facebook': 'Facebook',
+    'discord': 'Discord',
+    'email': 'Email',
+    'phone': 'Телефон',
+    'another': 'Другое'
   }
   return types[contactType] || contactType
 }
