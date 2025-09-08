@@ -292,3 +292,13 @@ export function useCheckAvailableSeats() {
         mutationFn: checkAvailableSeats
     })
 }
+
+export function useDeleteAccount() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: deleteAccount,
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['accounts'] })
+        }
+    })
+}
