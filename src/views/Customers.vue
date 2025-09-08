@@ -260,9 +260,9 @@
             <va-progress-circle indeterminate size="small" />
             <span>Загрузка подписок...</span>
           </div>
-          <div v-else-if="customerSubscriptions?.length" class="subscriptions-list">
+          <div v-else-if="modalCustomerSubscriptions?.length" class="subscriptions-list">
             <div 
-              v-for="subscription in customerSubscriptions" 
+              v-for="subscription in modalCustomerSubscriptions" 
               :key="subscription.$id"
               class="subscription-item"
             >
@@ -346,6 +346,10 @@ const { data: allOrders } = useOrders()
 const { mutateAsync: deleteCustomerMutation } = useDeleteCustomer()
 const { mutateAsync: updateCustomer } = useUpdateCustomer()
 
+// Реактивная ссылка для загрузки подписок клиента в модальном окне
+const customerIdForModal = ref(null)
+const { data: modalCustomerSubscriptions, isLoading: customerSubscriptionsLoading } = useCustomerSubscriptions(customerIdForModal)
+
 // Состояние поиска и фильтрации
 const searchQuery = ref('')
 const activeFilter = ref('all')
@@ -367,9 +371,6 @@ const selectedCustomer = ref(null)
 const isEditMode = ref(false)
 const updatingStatus = ref(false)
 
-// Подписки выбранного клиента - инициализируем только когда нужно
-let customerSubscriptions = ref(null)
-let customerSubscriptionsLoading = ref(false)
 
 // Статистика клиентов - вычисляемое свойство
 const customerStats = computed(() => {
@@ -595,32 +596,8 @@ function viewCustomer({ item: customer }) {
   selectedCustomer.value = customer
   showViewModal.value = true
   
-  // Загружаем подписки клиента при открытии модального окна
-  loadCustomerSubscriptions(customer.$id)
-}
-
-async function loadCustomerSubscriptions(customerId) {
-  if (!customerId) {
-    customerSubscriptions.value = []
-    return
-  }
-  
-  customerSubscriptionsLoading.value = true
-  try {
-    const { db, cfg } = await import('@/appwrite/client')
-    const { Query } = await import('appwrite')
-    
-    const response = await db.listDocuments(cfg.dbId, cfg.subscriptions, [
-      Query.equal('customers_id', customerId),
-      Query.orderDesc('$createdAt')
-    ])
-    customerSubscriptions.value = response.documents
-  } catch (error) {
-    console.error('Error loading customer subscriptions:', error)
-    customerSubscriptions.value = []
-  } finally {
-    customerSubscriptionsLoading.value = false
-  }
+  // Устанавливаем ID клиента для загрузки подписок через composable
+  customerIdForModal.value = customer.$id
 }
 
 function editCustomer(customer) {
@@ -678,8 +655,8 @@ async function deleteCustomer(customer) {
     console.error('Ошибка удаления клиента:', error)
     
     // Проверяем тип ошибки и показываем соответствующее сообщение
-    if (error.message?.includes('not authorized')) {
-      alert('Ошибка: У вас недостаточно прав для удаления клиентов. Обратитесь к администратору.')
+    if (error.message?.includes('not authorized') || error.message?.includes('The current user is not authorized')) {
+      alert('Ошибка: У вас недостаточно прав для удаления клиентов. Обратитесь к администратору для настройки разрешений в Appwrite.')
     } else {
       alert(`Ошибка при удалении клиента: ${error.message || 'Неизвестная ошибка'}`)
     }
@@ -689,7 +666,7 @@ async function deleteCustomer(customer) {
 function closeViewModal() {
   showViewModal.value = false
   selectedCustomer.value = null
-  customerSubscriptions.value = null
+  customerIdForModal.value = null
 }
 
 function handleCustomerSuccess() {
