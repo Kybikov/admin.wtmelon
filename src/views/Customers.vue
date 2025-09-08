@@ -529,7 +529,7 @@ function getContactTypeText(contactType) {
     'discord': 'Discord',
     'email': 'Email',
     'phone': 'Телефон',
-    'another': 'Другое'
+    'other': 'Другое'
   }
   return types[contactType] || contactType
 }
