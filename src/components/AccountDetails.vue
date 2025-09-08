@@ -140,7 +140,7 @@
           </div>
           <div class="financial-item">
             <span class="financial-label">Создал:</span>
-            <span class="financial-value">{{ account.created_by ? `ID: ${account.created_by.slice(-6)}` : 'Не указан' }}</span>
+            <span class="financial-value">{{ account.manager_id ? `Менеджер ${account.manager_id.slice(-6)}` : 'Не указан' }}</span>
           </div>
         </div>
       </div>
@@ -148,9 +148,6 @@
 
     <template #footer>
       <div class="modal-footer">
-        <va-button preset="secondary" @click="handleClose">
-          Закрыть
-        </va-button>
         <va-button @click="handleEdit">
           Редактировать
         </va-button>
