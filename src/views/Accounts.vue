@@ -35,9 +35,9 @@
               <p>Загрузка аккаунтов...</p>
             </div>
             
-            <div v-else-if="getAccountsForTab(tabValue)?.length" class="accounts-grid">
+            <div v-else-if="displayedAccounts.length" class="accounts-grid">
               <va-card 
-                v-for="account in getAccountsForTab(tabValue)" 
+                v-for="account in displayedAccounts" 
                 :key="account.$id"
                 class="account-card"
                 :class="{ 'account-full': account.seats_taken >= account.max_seats }"
@@ -114,8 +114,8 @@
             <div v-else class="no-accounts">
               <va-icon name="account_box" size="64px" color="secondary" />
               <h3>Нет аккаунтов</h3>
-              <p v-if="tabValue === 'all'">Пока нет созданных аккаунтов</p>
-              <p v-else>Для сервиса {{ getServiceName(tabValue) }} пока нет созданных аккаунтов</p>
+              <p v-if="activeServiceTab === 'all'">Пока нет созданных аккаунтов</p>
+              <p v-else>Для сервиса {{ getServiceName(activeServiceTab) }} пока нет созданных аккаунтов</p>
               <va-button @click="showCreateModal = true">
                 Создать первый аккаунт
               </va-button>
@@ -322,13 +322,27 @@ const createForm = reactive({
 })
 
 // Устанавливаем первый сервис как активный при загрузке
-watch(services, (newServices) => {
-  if (!activeServiceTab.value) {
-    activeServiceTab.value = 'all'
-  }
-}, { immediate: true })
+onMounted(() => {
+  activeServiceTab.value = 'all'
+})
 
 // Вычисляемые свойства
+const displayedAccounts = computed(() => {
+  console.log('displayedAccounts computed re-evaluated')
+  console.log('activeServiceTab.value:', activeServiceTab.value)
+  console.log('accounts.value (in computed):', accounts.value)
+
+  if (!accounts.value) {
+    return []
+  }
+
+  if (activeServiceTab.value === 'all') {
+    return accounts.value
+  } else {
+    return accounts.value.filter(account => account.services_id === activeServiceTab.value)
+  }
+})
+
 const isCreateFormValid = computed(() => {
   return createForm.services_id && 
          createForm.regions_id && 
@@ -338,17 +352,6 @@ const isCreateFormValid = computed(() => {
 })
 
 // Методы
-function getAccountsForTab(tabValue) {
-  if (!accounts.value) return []
-  
-  // Если выбрана вкладка "Все аккаунты"
-  if (tabValue === 'all') {
-    return accounts.value
-  }
-  
-  // Иначе фильтруем по сервису
-  return accounts.value.filter(account => account.services_id === tabValue)
-}
 
 function getAccountsByService(serviceId) {
   if (!accounts.value || !serviceId) return []
