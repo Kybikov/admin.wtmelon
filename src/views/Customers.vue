@@ -595,6 +595,11 @@ function viewCustomer(customer) {
 }
 
 async function loadCustomerSubscriptions(customerId) {
+  if (!customerId) {
+    customerSubscriptions.value = []
+    return
+  }
+  
   customerSubscriptionsLoading.value = true
   try {
     const { db, cfg } = await import('@/appwrite/client')
