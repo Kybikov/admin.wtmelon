@@ -25,7 +25,40 @@
           </template>
         </va-input>
         
-        <div class="filter-buttons">
+        <div class="filter-row">
+          <va-select
+            v-model="selectedService"
+            label="Сервис"
+            :options="serviceFilterOptions"
+            text-by="name"
+            value-by="$id"
+            clearable
+            class="filter-select"
+          />
+          
+          <va-select
+            v-model="selectedCountry"
+            label="Страна"
+            :options="countryFilterOptions"
+            text-by="name"
+            value-by="$id"
+            clearable
+            class="filter-select"
+          />
+          
+          <va-select
+            v-model="selectedContactType"
+            label="Тип связи"
+            :options="contactTypeFilterOptions"
+            text-by="text"
+            value-by="value"
+            clearable
+            class="filter-select"
+          />
+        </div>
+        
+        <div class="status-filters">
+          <span class="filter-label">Статус:</span>
           <va-button 
             v-for="filter in statusFilters" 
             :key="filter.value"
@@ -50,25 +83,53 @@
         :per-page="20"
         :current-page="currentPage"
         @update:current-page="currentPage = $event"
+        @row:click="viewCustomer"
+        class="clickable-table"
       >
         <template #cell(name)="{ rowData }">
           <div class="customer-name-cell">
-            <va-avatar 
-              :fallback-text="getInitials(rowData.name)"
-              size="32px"
-              color="primary"
-            />
             <div class="customer-info">
               <div class="name">{{ rowData.name }}</div>
-              <div class="contact" v-if="rowData.contact_handle">
-                {{ rowData.contact_type }}: {{ rowData.contact_handle }}
-              </div>
             </div>
+          </div>
+        </template>
+
+        <template #cell(contact)="{ rowData }">
+          <div class="contact-cell">
+            <a 
+              v-if="rowData.contact_url" 
+              :href="rowData.contact_url" 
+              target="_blank"
+              class="contact-link"
+              @click.stop
+            >
+              {{ getContactTypeText(rowData.contact_type) }}
+            </a>
+            <span v-else class="contact-no-link">
+              {{ getContactTypeText(rowData.contact_type) }}
+            </span>
           </div>
         </template>
 
         <template #cell(country)="{ rowData }">
           {{ getRegionName(rowData.regions_id) }}
+        </template>
+
+        <template #cell(active_subscriptions)="{ rowData }">
+          <div class="subscriptions-cell">
+            <div v-if="customerActiveSubscriptions[rowData.$id]?.length" class="subscriptions-list">
+              <va-chip 
+                v-for="subscription in customerActiveSubscriptions[rowData.$id]" 
+                :key="subscription.$id"
+                size="small"
+                color="success"
+                class="subscription-chip"
+              >
+                {{ getServiceName(subscription.services_id) }}
+              </va-chip>
+            </div>
+            <span v-else class="no-subscriptions">Нет активных</span>
+          </div>
         </template>
 
         <template #cell(total_purchases)="{ rowData }">
@@ -86,38 +147,6 @@
           >
             {{ getStatusText(rowData.status) }}
           </va-chip>
-        </template>
-
-        <template #cell(actions)="{ rowData }">
-          <div class="actions-cell">
-            <va-button-group>
-              <va-button 
-                size="small" 
-                preset="secondary"
-                @click="viewCustomer(rowData)"
-              >
-                <va-icon name="visibility" size="16px" />
-                Просмотр
-              </va-button>
-              <va-button 
-                size="small" 
-                preset="primary"
-                @click="editCustomer(rowData)"
-              >
-                <va-icon name="edit" size="16px" />
-                Изменить
-              </va-button>
-              <va-button 
-                size="small" 
-                preset="plain"
-                color="danger"
-                @click="deleteCustomer(rowData)"
-              >
-                <va-icon name="delete" size="16px" />
-                Удалить
-              </va-button>
-            </va-button-group>
-          </div>
         </template>
       </va-data-table>
     </va-card>
@@ -140,22 +169,27 @@
       <div v-if="selectedCustomer" class="customer-view-content">
         <!-- Основная информация -->
         <div class="customer-view-header">
-          <va-avatar 
-            :fallback-text="getInitials(selectedCustomer.name)"
-            size="64px"
-            color="primary"
-          />
           <div class="customer-view-info">
             <h2>{{ selectedCustomer.name }}</h2>
             <p v-if="selectedCustomer.contact_handle">
               {{ selectedCustomer.contact_type }}: {{ selectedCustomer.contact_handle }}
             </p>
-            <va-chip 
-              :color="getStatusColor(selectedCustomer.status)" 
-              size="small"
-            >
-              {{ getStatusText(selectedCustomer.status) }}
-            </va-chip>
+            <div class="status-actions">
+              <va-chip 
+                :color="getStatusColor(selectedCustomer.status)" 
+                size="small"
+              >
+                {{ getStatusText(selectedCustomer.status) }}
+              </va-chip>
+              <va-button 
+                size="small" 
+                preset="plain"
+                @click="toggleCustomerStatus(selectedCustomer)"
+                :loading="updatingStatus"
+              >
+                {{ selectedCustomer.status === 'active' ? 'Деактивировать' : 'Активировать' }}
+              </va-button>
+            </div>
           </div>
         </div>
 
@@ -188,12 +222,28 @@
             </div>
             <div class="info-item" v-if="selectedCustomer.contact_url">
               <va-icon name="link" />
-              <span>{{ selectedCustomer.contact_url }}</span>
+              <a :href="selectedCustomer.contact_url" target="_blank">{{ selectedCustomer.contact_url }}</a>
             </div>
             <div class="info-item" v-if="selectedCustomer.regions_id">
               <va-icon name="location_on" />
               <span>{{ getRegionName(selectedCustomer.regions_id) }}</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Теги -->
+        <div class="info-section" v-if="selectedCustomer.tags?.length">
+          <h4>Теги</h4>
+          <div class="tags-list">
+            <va-chip 
+              v-for="tag in selectedCustomer.tags" 
+              :key="tag"
+              size="small"
+              color="info"
+              outline
+            >
+              {{ tag }}
+            </va-chip>
           </div>
         </div>
 
@@ -248,6 +298,13 @@
           <va-button @click="editCustomer(selectedCustomer)">
             Редактировать
           </va-button>
+          <va-button 
+            preset="plain" 
+            color="danger"
+            @click="deleteCustomer(selectedCustomer)"
+          >
+            Удалить
+          </va-button>
         </div>
       </template>
     </va-modal>
@@ -261,9 +318,10 @@ import { account } from '@/appwrite/client'
 import { 
   useCustomers, 
   useDeleteCustomer,
-  useCustomerStats
+  useCustomerStats,
+  useUpdateCustomer
 } from '@/composables/useCustomersApi'
-import { useCustomerSubscriptions } from '@/composables/useSubscriptionsApi'
+import { useCustomerSubscriptions, useSubscriptions } from '@/composables/useSubscriptionsApi'
 import { useServices } from '@/composables/useServicesApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
 import CustomerModal from '@/components/CustomerModal.vue'
@@ -283,11 +341,16 @@ onMounted(async () => {
 const { data: customers, isLoading } = useCustomers()
 const { data: services } = useServices()
 const { data: regions } = useRegions()
+const { data: allSubscriptions } = useSubscriptions()
 const { mutateAsync: deleteCustomerMutation } = useDeleteCustomer()
+const { mutateAsync: updateCustomer } = useUpdateCustomer()
 
 // Состояние поиска и фильтрации
 const searchQuery = ref('')
 const activeFilter = ref('all')
+const selectedService = ref('')
+const selectedCountry = ref('')
+const selectedContactType = ref('')
 const currentPage = ref(1)
 
 const statusFilters = [
@@ -301,6 +364,7 @@ const showCreateModal = ref(false)
 const showViewModal = ref(false)
 const selectedCustomer = ref(null)
 const isEditMode = ref(false)
+const updatingStatus = ref(false)
 
 // Подписки выбранного клиента - инициализируем только когда нужно
 let customerSubscriptions = ref(null)
@@ -309,15 +373,46 @@ let customerSubscriptionsLoading = ref(false)
 // Статистика клиентов
 const customerStats = ref({})
 
+// Активные подписки клиентов
+const customerActiveSubscriptions = ref({})
+
 // Колонки таблицы
 const columns = [
   { key: 'name', label: 'Имя', sortable: true },
+  { key: 'contact', label: 'Контакт', sortable: true },
   { key: 'country', label: 'Страна', sortable: true },
+  { key: 'active_subscriptions', label: 'Активные подписки', sortable: false },
   { key: 'total_purchases', label: 'Покупок', sortable: true },
   { key: 'total_spent', label: 'Потрачено', sortable: true },
-  { key: 'status', label: 'Статус', sortable: true },
-  { key: 'actions', label: 'Действия', width: 280 }
+  { key: 'status', label: 'Статус', sortable: true }
 ]
+
+// Опции фильтров
+const serviceFilterOptions = computed(() => {
+  return [
+    { $id: '', name: 'Все сервисы' },
+    ...(services.value || [])
+  ]
+})
+
+const countryFilterOptions = computed(() => {
+  return [
+    { $id: '', name: 'Все страны' },
+    ...(regions.value || [])
+  ]
+})
+
+const contactTypeFilterOptions = computed(() => {
+  return [
+    { value: '', text: 'Все типы связи' },
+    { value: 'telegram', text: 'Telegram' },
+    { value: 'whatsapp', text: 'WhatsApp' },
+    { value: 'discord', text: 'Discord' },
+    { value: 'email', text: 'Email' },
+    { value: 'phone', text: 'Телефон' },
+    { value: 'other', text: 'Другое' }
+  ]
+})
 
 // Вычисляемые свойства
 const filteredCustomers = computed(() => {
@@ -340,34 +435,84 @@ const filteredCustomers = computed(() => {
     filtered = filtered.filter(customer => customer.status === activeFilter.value)
   }
   
+  // Фильтр по сервису
+  if (selectedService.value) {
+    filtered = filtered.filter(customer => {
+      const activeSubscriptions = customerActiveSubscriptions.value[customer.$id] || []
+      return activeSubscriptions.some(sub => sub.services_id === selectedService.value)
+    })
+  }
+  
+  // Фильтр по стране
+  if (selectedCountry.value) {
+    filtered = filtered.filter(customer => customer.regions_id === selectedCountry.value)
+  }
+  
+  // Фильтр по типу связи
+  if (selectedContactType.value) {
+    filtered = filtered.filter(customer => customer.contact_type === selectedContactType.value)
+  }
+  
   return filtered
 })
 
-// Загружаем статистику для каждого клиента
-watch(customers, async (newCustomers) => {
-  if (newCustomers) {
+// Загружаем статистику и активные подписки для каждого клиента
+watch([customers, allSubscriptions], async ([newCustomers, newSubscriptions]) => {
+  if (newCustomers && newSubscriptions) {
     for (const customer of newCustomers) {
       try {
+        // Загружаем статистику
         const { data: stats } = await useCustomerStats(customer.$id)
         if (stats.value) {
           customerStats.value[customer.$id] = stats.value
         }
+        
+        // Загружаем активные подписки
+        const activeSubscriptions = newSubscriptions.filter(sub => 
+          sub.customers_id === customer.$id && sub.state === 'active'
+        )
+        customerActiveSubscriptions.value[customer.$id] = activeSubscriptions
+        
+        // Автоматически обновляем статус клиента
+        const shouldBeActive = activeSubscriptions.length > 0
+        const currentStatus = customer.status
+        
+        if ((shouldBeActive && currentStatus !== 'active') || (!shouldBeActive && currentStatus !== 'inactive')) {
+          const newStatus = shouldBeActive ? 'active' : 'inactive'
+          await updateCustomer({
+            id: customer.$id,
+            status: newStatus
+          })
+        }
+        
       } catch (error) {
-        console.error('Ошибка загрузки статистики клиента:', error)
+        console.error('Ошибка загрузки данных клиента:', error)
       }
     }
   }
 }, { immediate: true })
 
 // Методы
-function getInitials(name) {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
   return region?.name || 'Не указано'
+}
+
+function getServiceName(serviceId) {
+  const service = services.value?.find(s => s.$id === serviceId)
+  return service?.name || 'Неизвестный сервис'
+}
+
+function getContactTypeText(contactType) {
+  const types = {
+    'telegram': 'Telegram',
+    'whatsapp': 'WhatsApp',
+    'discord': 'Discord',
+    'email': 'Email',
+    'phone': 'Телефон',
+    'other': 'Другое'
+  }
+  return types[contactType] || contactType
 }
 
 function getStatusColor(status) {
@@ -384,11 +529,6 @@ function getStatusText(status) {
     'inactive': 'Неактивный'
   }
   return texts[status] || status
-}
-
-function getServiceName(serviceId) {
-  const service = services.value?.find(s => s.$id === serviceId)
-  return service?.name || 'Неизвестный сервис'
 }
 
 function getSubscriptionStatusColor(state) {
@@ -462,6 +602,25 @@ function createSubscriptionForCustomer(customer) {
   })
 }
 
+async function toggleCustomerStatus(customer) {
+  updatingStatus.value = true
+  try {
+    const newStatus = customer.status === 'active' ? 'inactive' : 'active'
+    await updateCustomer({
+      id: customer.$id,
+      status: newStatus
+    })
+    
+    // Обновляем локальные данные
+    customer.status = newStatus
+    selectedCustomer.value.status = newStatus
+  } catch (error) {
+    console.error('Ошибка обновления статуса клиента:', error)
+  } finally {
+    updatingStatus.value = false
+  }
+}
+
 async function deleteCustomer(customer) {
   const confirmed = await new Promise(resolve => {
     const result = confirm(`Вы уверены, что хотите удалить клиента "${customer.name}"?`)
@@ -472,6 +631,7 @@ async function deleteCustomer(customer) {
   
   try {
     await deleteCustomerMutation(customer.$id)
+    showViewModal.value = false
   } catch (error) {
     console.error('Ошибка удаления клиента:', error)
     
@@ -541,20 +701,34 @@ function handleCustomerSuccess() {
 
 .filters-content {
   display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .search-input {
-  flex: 1;
-  min-width: 300px;
+  max-width: 400px;
 }
 
-.filter-buttons {
+.filter-row {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   flex-wrap: wrap;
+}
+
+.filter-select {
+  min-width: 200px;
+}
+
+.status-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-weight: 600;
+  color: var(--va-text-primary);
 }
 
 /* Таблица */
@@ -563,6 +737,19 @@ function handleCustomerSuccess() {
   border: 1px solid var(--va-background-element) !important;
   border-radius: 16px !important;
   padding: 24px !important;
+}
+
+.clickable-table {
+  cursor: pointer;
+}
+
+:deep(.clickable-table .va-data-table__table-tr) {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+:deep(.clickable-table .va-data-table__table-tr:hover) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .customer-name-cell {
@@ -576,36 +763,46 @@ function handleCustomerSuccess() {
   color: var(--va-text-primary);
 }
 
-.customer-info .contact {
-  font-size: 12px;
-  color: var(--va-text-secondary);
-  opacity: 0.8;
-}
-
-.actions-cell {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-/* Улучшенные кнопки действий */
-:deep(.va-button-group) {
-  gap: 4px;
-}
-
-:deep(.va-button-group .va-button) {
-  min-width: auto;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 8px;
+.contact-cell {
   display: flex;
   align-items: center;
+}
+
+.contact-link {
+  color: var(--va-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.contact-link:hover {
+  color: var(--va-primary);
+  text-decoration: underline;
+}
+
+.contact-no-link {
+  color: var(--va-text-secondary);
+}
+
+.subscriptions-cell {
+  max-width: 200px;
+}
+
+.subscriptions-list {
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
-:deep(.va-button-group .va-button .va-icon) {
-  font-size: 14px;
+.subscription-chip {
+  font-size: 11px !important;
+  height: 20px !important;
+}
+
+.no-subscriptions {
+  color: var(--va-text-secondary);
+  font-style: italic;
+  font-size: 12px;
 }
 
 /* Модальное окно просмотра */
@@ -616,9 +813,6 @@ function handleCustomerSuccess() {
 }
 
 .customer-view-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--va-background-element);
 }
@@ -634,6 +828,12 @@ function handleCustomerSuccess() {
   font-size: 16px;
   color: var(--va-text-secondary);
   margin: 0 0 8px 0;
+}
+
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .customer-stats-section h4,
@@ -685,6 +885,21 @@ function handleCustomerSuccess() {
   background: var(--va-background-primary);
   border-radius: 8px;
   font-size: 14px;
+}
+
+.info-item a {
+  color: var(--va-primary);
+  text-decoration: none;
+}
+
+.info-item a:hover {
+  text-decoration: underline;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .comment-text {
@@ -765,17 +980,15 @@ function handleCustomerSuccess() {
     align-items: stretch;
   }
   
-  .filters-content {
+  .filter-row {
     flex-direction: column;
-    align-items: stretch;
   }
   
-  .search-input {
+  .filter-select {
     min-width: auto;
   }
   
   .customer-view-header {
-    flex-direction: column;
     text-align: center;
   }
   
@@ -783,18 +996,9 @@ function handleCustomerSuccess() {
     grid-template-columns: 1fr;
   }
   
-  .actions-cell {
-    flex-direction: column;
-  }
-  
-  :deep(.va-button-group) {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  :deep(.va-button-group .va-button) {
-    width: 100%;
-    justify-content: center;
+  .subscriptions-cell {
+    max-width: none;
   }
 }
 </style>
+</action>
