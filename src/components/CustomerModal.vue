@@ -201,6 +201,11 @@ function addExistingTag(tag) {
 }
 // Заполняем форму при редактировании
 watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
+  console.log('=== WATCHER TRIGGERED ===')
+  console.log('customer:', customer)
+  console.log('isEdit:', isEdit)
+  console.log('customer?.$id:', customer?.$id)
+  
   if (customer && isEdit) {
     console.log('Filling form with customer data:', customer)
     console.log('Customer ID:', customer.$id)
@@ -217,6 +222,7 @@ watch([() => props.customer, () => props.isEdit], ([customer, isEdit]) => {
     })
     console.log('Form after filling:', form)
   }
+  console.log('=== WATCHER END ===')
 }, { immediate: true })
 
 function resetForm() {
@@ -242,6 +248,11 @@ function handleClose() {
 }
 
 async function handleSubmit() {
+  console.log('=== HANDLE SUBMIT START ===')
+  console.log('props.isEdit:', props.isEdit)
+  console.log('props.customer:', props.customer)
+  console.log('props.customer?.$id:', props.customer?.$id)
+  
   // Валидация
   errors.name = null
   if (!form.name) {
@@ -268,13 +279,14 @@ async function handleSubmit() {
     }
 
     if (props.isEdit && props.customer) {
-      console.log('UPDATING customer with ID:', props.customer.$id)
+      console.log('=== UPDATING CUSTOMER ===')
       console.log('Updating customer with ID:', props.customer.$id)
       console.log('Update payload:', payload)
       await updateCustomer({ id: props.customer.$id, ...payload })
       console.log('Customer updated successfully')
     } else {
-      console.log('CREATING new customer')
+      console.log('=== CREATING NEW CUSTOMER ===')
+      console.log('Reason for creating: isEdit =', props.isEdit, ', customer =', props.customer)
       console.log('Creating new customer with payload:', payload)
       await createCustomer(payload)
       console.log('Customer created successfully')
@@ -286,6 +298,7 @@ async function handleSubmit() {
     console.error('Ошибка при сохранении клиента:', error)
     alert(`Ошибка: ${error.message}`)
   }
+  console.log('=== HANDLE SUBMIT END ===')
 }
 </script>
 

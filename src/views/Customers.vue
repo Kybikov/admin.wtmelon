@@ -606,11 +606,18 @@ function viewCustomer({ item: customer }) {
 function editCustomer(customer) {
   console.log('Editing customer:', customer)
   console.log('Customer ID:', customer.$id)
-  console.log('Is edit mode will be:', true)
   selectedCustomer.value = customer
   isEditMode.value = true
+  console.log('Setting isEditMode to:', isEditMode.value)
+  console.log('selectedCustomer set to:', selectedCustomer.value)
   showCreateModal.value = true
   showViewModal.value = false
+  
+  // Добавляем небольшую задержку чтобы убедиться что пропсы переданы
+  setTimeout(() => {
+    console.log('After timeout - isEditMode:', isEditMode.value)
+    console.log('After timeout - selectedCustomer:', selectedCustomer.value)
+  }, 100)
 }
 
 function createSubscriptionForCustomer(customer) {
@@ -678,13 +685,17 @@ function closeViewModal() {
 
 function handleCustomerSuccess() {
   showCreateModal.value = false
-  selectedCustomer.value = null
-  isEditMode.value = false
   
   // Закрываем модальное окно просмотра если оно открыто
   if (showViewModal.value) {
     showViewModal.value = false
   }
+  
+  // Сбрасываем состояние после небольшой задержки
+  setTimeout(() => {
+    selectedCustomer.value = null
+    isEditMode.value = false
+  }, 100)
 }
 </script>
 
