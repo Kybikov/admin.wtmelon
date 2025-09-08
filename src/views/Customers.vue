@@ -318,12 +318,12 @@ import { account } from '@/appwrite/client'
 import { 
   useCustomers, 
   useDeleteCustomer,
-  useCustomerStats,
   useUpdateCustomer
 } from '@/composables/useCustomersApi'
 import { useCustomerSubscriptions, useSubscriptions } from '@/composables/useSubscriptionsApi'
 import { useServices } from '@/composables/useServicesApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
+import { useOrders } from '@/composables/useOrdersApi'
 import CustomerModal from '@/components/CustomerModal.vue'
 
 const router = useRouter()
@@ -342,6 +342,7 @@ const { data: customers, isLoading } = useCustomers()
 const { data: services } = useServices()
 const { data: regions } = useRegions()
 const { data: allSubscriptions } = useSubscriptions()
+const { data: allOrders } = useOrders()
 const { mutateAsync: deleteCustomerMutation } = useDeleteCustomer()
 const { mutateAsync: updateCustomer } = useUpdateCustomer()
 
@@ -370,11 +371,36 @@ const updatingStatus = ref(false)
 let customerSubscriptions = ref(null)
 let customerSubscriptionsLoading = ref(false)
 
-// Статистика клиентов
-const customerStats = ref({})
+// Статистика клиентов - вычисляемое свойство
+const customerStats = computed(() => {
+  const stats = {}
+  if (customers.value && allOrders.value && allSubscriptions.value) {
+    customers.value.forEach(customer => {
+      const customerOrders = allOrders.value.filter(order => order.customers_id === customer.$id)
+      const customerSubscriptions = allSubscriptions.value.filter(sub => sub.customers_id === customer.$id)
+      
+      stats[customer.$id] = {
+        totalPurchases: customerOrders.length,
+        totalSpent: customerOrders.reduce((sum, order) => sum + (order.sell_price || 0), 0),
+        activeSubscriptions: customerSubscriptions.filter(sub => sub.state === 'active').length
+      }
+    })
+  }
+  return stats
+})
 
-// Активные подписки клиентов
-const customerActiveSubscriptions = ref({})
+// Активные подписки клиентов - вычисляемое свойство
+const customerActiveSubscriptions = computed(() => {
+  const activeSubscriptions = {}
+  if (customers.value && allSubscriptions.value) {
+    customers.value.forEach(customer => {
+      activeSubscriptions[customer.$id] = allSubscriptions.value.filter(sub => 
+        sub.customers_id === customer.$id && sub.state === 'active'
+      )
+    })
+  }
+  return activeSubscriptions
+})
 
 // Колонки таблицы
 const columns = [
@@ -456,22 +482,12 @@ const filteredCustomers = computed(() => {
   return filtered
 })
 
-// Загружаем статистику и активные подписки для каждого клиента
-watch([customers, allSubscriptions], async ([newCustomers, newSubscriptions]) => {
-  if (newCustomers && newSubscriptions) {
+// Автоматическое обновление статуса клиентов
+watch([customers, customerActiveSubscriptions], async ([newCustomers, newActiveSubscriptions]) => {
+  if (newCustomers && newActiveSubscriptions) {
     for (const customer of newCustomers) {
       try {
-        // Загружаем статистику
-        const { data: stats } = await useCustomerStats(customer.$id)
-        if (stats.value) {
-          customerStats.value[customer.$id] = stats.value
-        }
-        
-        // Загружаем активные подписки
-        const activeSubscriptions = newSubscriptions.filter(sub => 
-          sub.customers_id === customer.$id && sub.state === 'active'
-        )
-        customerActiveSubscriptions.value[customer.$id] = activeSubscriptions
+        const activeSubscriptions = newActiveSubscriptions[customer.$id] || []
         
         // Автоматически обновляем статус клиента
         const shouldBeActive = activeSubscriptions.length > 0
