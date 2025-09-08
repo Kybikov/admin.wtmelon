@@ -193,12 +193,16 @@
         </div>
 
         <div class="form-row">
+          <!-- Временно скрыты поля цен до добавления в схему Appwrite -->
+          <!-- 
           <va-input 
             v-model="createForm.cost_price" 
             label="Цена закупки" 
             type="number"
             :min="0"
             class="form-input"
+            disabled
+            placeholder="Будет добавлено позже"
           />
           <va-input 
             v-model="createForm.sell_price" 
@@ -206,7 +210,10 @@
             type="number"
             :min="0"
             class="form-input"
+            disabled
+            placeholder="Будет добавлено позже"
           />
+          -->
         </div>
 
         <va-date-input
@@ -390,15 +397,36 @@ async function handleCreateAccount() {
   if (!isCreateFormValid.value) return
 
   try {
+    // Создаем payload только с полями, которые существуют в схеме Appwrite
     const payload = {
-      ...createForm,
+      services_id: createForm.services_id,
+      regions_id: createForm.regions_id,
+      login: createForm.login,
+      password: createForm.password,
+      max_seats: createForm.max_seats,
+      service_login_key: createForm.service_login_key || '',
+      paid_until: createForm.paid_until,
+      household_address: createForm.household_address || '',
+      is_auto_funded: createForm.is_auto_funded,
+      status: createForm.status,
+      seats_taken: createForm.seats_taken,
       seats_free: createForm.max_seats - createForm.seats_taken
     }
+    
+    // Удаляем поля cost_price и sell_price, если они не существуют в схеме
+    // Эти поля можно будет добавить позже в Appwrite Console
     
     await createAccount(payload)
     closeCreateModal()
   } catch (error) {
     console.error('Ошибка создания аккаунта:', error)
+    
+    // Показываем более информативное сообщение об ошибке
+    if (error.message?.includes('Unknown attribute')) {
+      alert('Ошибка: Некоторые поля не существуют в схеме базы данных. Обратитесь к администратору для добавления недостающих полей.')
+    } else {
+      alert(`Ошибка при создании аккаунта: ${error.message || 'Неизвестная ошибка'}`)
+    }
   }
 }
 </script>

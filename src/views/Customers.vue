@@ -442,13 +442,24 @@ function createSubscriptionForCustomer(customer) {
 }
 
 async function deleteCustomer(customer) {
-  if (!confirm(`Вы уверены, что хотите удалить клиента "${customer.name}"?`)) return
+  const confirmed = await new Promise(resolve => {
+    const result = confirm(`Вы уверены, что хотите удалить клиента "${customer.name}"?`)
+    resolve(result)
+  })
+  
+  if (!confirmed) return
   
   try {
     await deleteCustomerMutation(customer.$id)
   } catch (error) {
     console.error('Ошибка удаления клиента:', error)
-    alert('Ошибка при удалении клиента')
+    
+    // Проверяем тип ошибки и показываем соответствующее сообщение
+    if (error.message?.includes('not authorized')) {
+      alert('Ошибка: У вас недостаточно прав для удаления клиентов. Обратитесь к администратору.')
+    } else {
+      alert(`Ошибка при удалении клиента: ${error.message || 'Неизвестная ошибка'}`)
+    }
   }
 }
 
