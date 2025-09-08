@@ -123,7 +123,7 @@
           </div>
         </template>
 
-        <template #cell(country)="{ rowData }">
+        <template #cell(regions_id)="{ rowData }">
           {{ getRegionName(rowData.regions_id) }}
         </template>
 
@@ -419,11 +419,11 @@ const customerActiveSubscriptions = computed(() => {
 // Колонки таблицы
 const columns = [
   { key: 'name', label: 'Имя', sortable: true },
-  { key: 'contact', label: 'Контакт', sortable: true },
-  { key: 'country', label: 'Страна', sortable: true },
+  { key: 'contact_type', label: 'Контакт', sortable: true },
+  { key: 'regions_id', label: 'Страна', sortable: true },
   { key: 'active_subscriptions', label: 'Активные подписки', sortable: false },
-  { key: 'total_purchases', label: 'Покупок', sortable: true },
-  { key: 'total_spent', label: 'Потрачено', sortable: true },
+  { key: 'total_purchases', label: 'Покупок', sortable: true, sortingFn: sortByTotalPurchases },
+  { key: 'total_spent', label: 'Потрачено', sortable: true, sortingFn: sortByTotalSpent },
   { key: 'status', label: 'Статус', sortable: true }
 ]
 
@@ -552,6 +552,18 @@ watch([customers, customerActiveSubscriptions], async ([newCustomers, newActiveS
 }, { immediate: true })
 
 // Методы
+function sortByTotalPurchases(a, b) {
+  const aValue = customerStats.value[a.$id]?.totalPurchases || 0
+  const bValue = customerStats.value[b.$id]?.totalPurchases || 0
+  return aValue - bValue
+}
+
+function sortByTotalSpent(a, b) {
+  const aValue = customerStats.value[a.$id]?.totalSpent || 0
+  const bValue = customerStats.value[b.$id]?.totalSpent || 0
+  return aValue - bValue
+}
+
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
   return region?.name || 'Не указано'
