@@ -1001,4 +1001,3 @@ function handleCustomerSuccess() {
   }
 }
 </style>
-</action>
