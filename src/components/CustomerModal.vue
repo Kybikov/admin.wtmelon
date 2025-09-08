@@ -12,7 +12,7 @@
           label="Имя клиента *" 
           :rules="[v => !!v || 'Имя обязательно']"
           :error="!!errors.name"
-          :error-messages="errors.name"
+          :error-messages="errors.name ?? null"
           class="form-input"
         />
         <va-select
