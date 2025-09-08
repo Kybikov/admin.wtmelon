@@ -172,10 +172,10 @@ import { useServices } from '@/composables/useServicesApi'
 
 // Список менеджеров
 const managers = [
-  { id: 'bogdan', name: 'Bogdan' },
-  { id: 'amir', name: 'Amir' },
-  { id: 'vadim', name: 'Vadim' },
-  { id: 'test', name: 'Test' }
+  { id: '68ba86a3b32ab6dacd62', name: 'Bogdan' },
+  { id: '68ba8622253e92f9d8a2', name: 'Amir' },
+  { id: '68ba8643df93c4a990fb', name: 'Vadim' },
+  { id: '68b4ce040015e10fcd9d', name: 'Test' }
 ]
 
 const props = defineProps({
