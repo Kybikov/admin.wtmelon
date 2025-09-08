@@ -145,12 +145,12 @@ const errors = reactive({
 })
 
 const contactTypeOptions = [
-  { text: 'Telegram', value: 'Telegram' },
-  { text: 'WhatsApp', value: 'WhatsApp' },
-  { text: 'Discord', value: 'Discord' },
-  { text: 'Email', value: 'Email' },
-  { text: 'Телефон', value: 'Phone' },
-  { text: 'Другое', value: 'Other' }
+  { text: 'Telegram', value: 'telegram' },
+  { text: 'WhatsApp', value: 'whatsapp' },
+  { text: 'Discord', value: 'discord' },
+  { text: 'Email', value: 'email' },
+  { text: 'Телефон', value: 'phone' },
+  { text: 'Другое', value: 'other' }
 ]
 
 const countryOptions = computed(() => regions.value || [])
@@ -161,12 +161,12 @@ watch(() => props.customer, (customer) => {
     Object.assign(form, {
       name: customer.name || '',
       country: customer.regions_id || '',
-      contact_type: customer.contact_type || 'Telegram',
+      contact_type: customer.contact_type || 'telegram',
       contact_url: customer.contact_url || '',
       contact_handle: customer.contact_handle || '',
       phone: customer.phone || '',
       comment: customer.comment || '',
-      tags: customer.tags || '',
+      tags: Array.isArray(customer.tags) ? customer.tags.join(', ') : (customer.tags || ''),
       status: customer.status || 'active'
     })
   }
@@ -176,7 +176,7 @@ function resetForm() {
   Object.assign(form, {
     name: '',
     country: '',
-    contact_type: 'Telegram',
+    contact_type: 'telegram',
     contact_url: '',
     contact_handle: '',
     phone: '',

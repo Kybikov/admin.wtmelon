@@ -432,12 +432,12 @@ const countryFilterOptions = computed(() => {
 const contactTypeFilterOptions = computed(() => {
   return [
     { value: '', text: 'Все типы связи' },
-    { value: 'Telegram', text: 'Telegram' },
-    { value: 'WhatsApp', text: 'WhatsApp' },
-    { value: 'Discord', text: 'Discord' },
-    { value: 'Email', text: 'Email' },
-    { value: 'Phone', text: 'Телефон' },
-    { value: 'Other', text: 'Другое' }
+    { value: 'telegram', text: 'Telegram' },
+    { value: 'whatsapp', text: 'WhatsApp' },
+    { value: 'discord', text: 'Discord' },
+    { value: 'email', text: 'Email' },
+    { value: 'phone', text: 'Телефон' },
+    { value: 'other', text: 'Другое' }
   ]
 })
 
@@ -522,13 +522,13 @@ function getServiceName(serviceId) {
 
 function getContactTypeText(contactType) {
   const types = {
-    'Telegram': 'Telegram',
-    'WhatsApp': 'WhatsApp',
-    'Instagram': 'instagram',
-    'Facebook': 'facebook',
-    'Discord': 'Discord',
-    'Phone': 'Телефон',
-    'Other': 'Другое'
+    'telegram': 'Telegram',
+    'whatsapp': 'WhatsApp',
+    'instagram': 'Instagram',
+    'facebook': 'Facebook',
+    'discord': 'Discord',
+    'phone': 'Телефон',
+    'other': 'Другое'
   }
   return types[contactType] || contactType
 }
@@ -651,6 +651,7 @@ async function deleteCustomer(customer) {
   try {
     await deleteCustomerMutation(customer.$id)
     showViewModal.value = false
+    selectedCustomer.value = null
   } catch (error) {
     console.error('Ошибка удаления клиента:', error)
     

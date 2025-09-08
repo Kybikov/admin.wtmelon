@@ -18,8 +18,8 @@
         <template #left>
           <va-sidebar
             v-model="sidebarVisible"
-            :width="280"
-            :minimized-width="64"
+            width="280"
+            minimized-width="64"
             :minimized="sidebarMinimized"
             color="backgroundSecondary"
             class="app-sidebar"
