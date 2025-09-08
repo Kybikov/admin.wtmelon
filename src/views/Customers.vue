@@ -24,6 +24,19 @@
             <va-icon name="search" size="18px" />
           </template>
         </va-input>
+
+        <div class="status-filters">
+          <span class="filter-label">Статус:</span>
+          <va-button 
+            v-for="filter in statusFilters" 
+            :key="filter.value"
+            :preset="activeFilter === filter.value ? 'primary' : 'secondary'"
+            size="small"
+            @click="activeFilter = filter.value"
+          >
+            {{ filter.label }}
+          </va-button>
+        </div>
         
         <div class="filter-row">
           <va-select
@@ -67,18 +80,6 @@
           />
         </div>
         
-        <div class="status-filters">
-          <span class="filter-label">Статус:</span>
-          <va-button 
-            v-for="filter in statusFilters" 
-            :key="filter.value"
-            :preset="activeFilter === filter.value ? 'primary' : 'secondary'"
-            size="small"
-            @click="activeFilter = filter.value"
-          >
-            {{ filter.label }}
-          </va-button>
-        </div>
       </div>
     </va-card>
 
