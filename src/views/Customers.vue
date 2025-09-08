@@ -122,6 +122,13 @@
       </va-data-table>
     </va-card>
 
+    <CustomerModal
+      v-model="showCreateModal"
+      :customer="selectedCustomer"
+      :is-edit="isEditMode"
+      @success="handleCustomerSuccess"
+    />
+
     <!-- Модальное окно просмотра клиента -->
     <va-modal 
       v-model="showViewModal" 

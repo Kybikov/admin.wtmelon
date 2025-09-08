@@ -304,11 +304,11 @@ const createForm = reactive({
 })
 
 // Устанавливаем первый сервис как активный при загрузке
-computed(() => {
-  if (services.value?.length && !activeServiceTab.value) {
-    activeServiceTab.value = services.value[0].$id
+watch(services, (newServices) => {
+  if (newServices?.length && !activeServiceTab.value) {
+    activeServiceTab.value = newServices[0].$id
   }
-})
+}, { immediate: true })
 
 // Вычисляемые свойства
 const isCreateFormValid = computed(() => {
