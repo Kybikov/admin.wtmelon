@@ -905,6 +905,23 @@ async function handleUpdateAccount() {
     padding: 16px;
   }
   
+  .filters-row {
+    flex-direction: column;
+  }
+  
+  .filter-select {
+    min-width: auto;
+  }
+  
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .page-header {
     flex-direction: column;
     align-items: stretch;

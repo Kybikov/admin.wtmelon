@@ -197,9 +197,13 @@ const { data: seats, isLoading: seatsLoading } = useAccountSeats(
   computed(() => props.account?.$id)
 )
 const { mutateAsync: freeSeat, isLoading: freeing } = useFreeSeat()
+const { mutateAsync: occupySeat, isLoading: assigningSeat } = useOccupySeat()
 const { mutateAsync: deleteAccount } = useDeleteAccount()
 
 const freeingSeat = ref(null)
+const showAssignSeatModal = ref(false)
+const selectedCustomerForAssign = ref(null)
+const customerSearchQuery = ref('')
 
 // Вычисляемые свойства
 const occupiedSeats = computed(() => {
