@@ -662,7 +662,7 @@ const filteredAccounts = computed(() => {
     filtered = filtered.filter(account => 
       account.login?.toLowerCase().includes(query) ||
       account.service_login_key?.toLowerCase().includes(query) ||
-      account.household_address?.toLowerCase().includes(query)
+      account.household_address?.toLowerCase().includes(query) ||
       (Array.isArray(account.tags) && account.tags.some(tag => tag?.toLowerCase().includes(query)))
     )
   }
@@ -723,6 +723,24 @@ const filteredAccounts = computed(() => {
   }
   
   return filtered
+})
+
+// Существующие теги из аккаунтов
+const existingTags = computed(() => {
+  if (!Array.isArray(accounts.value)) return []
+  
+  const allTags = new Set()
+  accounts.value.forEach(account => {
+    if (Array.isArray(account.tags)) {
+      account.tags.forEach(tag => {
+        if (tag && typeof tag === 'string' && tag.trim()) {
+          allTags.add(tag.trim())
+        }
+      })
+    }
+  })
+  
+  return Array.from(allTags).sort()
 })
 
 const activeAccountsCount = computed(() => {
@@ -837,10 +855,12 @@ function clearDateFilters() {
 
 function clearAllFilters() {
   searchQuery.value = ''
-  selectedServices.value = []
-  selectedRegions.value = []
-  selectedOccupancy.value = []
-  selectedStatuses.value = []
+  selectedServices.value = ['all']
+  selectedRegions.value = ['all']
+  selectedOccupancy.value = ['all']
+  selectedStatuses.value = ['all']
+  selectAllServices.value = true
+  selectAllRegions.value = true
   clearDateFilters()
 }
 
