@@ -220,26 +220,6 @@ const isExpiringSoon = computed(() => {
   return paidUntil <= threeDaysFromNow && paidUntil > new Date()
 })
 
-  const today = new Date()
-  
-  if (type === 'expiring') {
-    // Истекают в ближайшие 7 дней
-    expiryDateFrom.value = today
-    const weekFromNow = new Date()
-    weekFromNow.setDate(today.getDate() + 7)
-    expiryDateTo.value = weekFromNow
-  } else if (type === 'expired') {
-    // Уже просроченные
-    expiryDateFrom.value = null
-    expiryDateTo.value = today
-  }
-}
-
-function clearDateFilters() {
-  expiryDateFrom.value = null
-  expiryDateTo.value = null
-}
-
 // Клиенты для назначения места (исключаем уже занявших места в этом аккаунте)
 const availableCustomers = computed(() => {
   if (!customers.value) return []
@@ -634,6 +614,102 @@ async function handleFreeSeat(seat) {
   justify-content: flex-end;
 }
 
+.page-subtitle {
+  font-size: 16px;
+  color: var(--va-text-secondary);
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Фильтры */
+.filters-card {
+  background: var(--va-background-secondary) !important;
+  border: 1px solid var(--va-background-element) !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  margin-bottom: 24px;
+}
+
+.filters-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-row {
+  display: flex;
+  gap: 16px;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.filter-select {
+  min-width: 200px;
+}
+
+.date-filters-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  min-width: 180px;
+}
+
+.quick-date-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-stats {
+  padding-top: 16px;
+  border-top: 1px solid var(--va-background-element);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--va-background-primary);
+  border-radius: 8px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--va-text-secondary);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.expiring-warning {
+  color: var(--va-warning) !important;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .account-stats {
     grid-template-columns: 1fr;
@@ -651,6 +727,45 @@ async function handleFreeSeat(seat) {
   
   .seat-actions {
     justify-content: flex-end;
+  }
+  
+  .accounts-page {
+    padding: 16px;
+  }
+  
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-select {
+    min-width: auto;
+  }
+  
+  .date-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .date-input {
+    min-width: auto;
+  }
+  
+  .quick-date-filters {
+    justify-content: center;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .header-actions {
+    justify-content: stretch;
+  }
+  
+  .header-actions .va-button {
+    flex: 1;
   }
 }
 </style>
