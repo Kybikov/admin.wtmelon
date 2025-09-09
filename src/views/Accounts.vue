@@ -854,10 +854,12 @@ function clearDateFilters() {
 
 function clearAllFilters() {
   searchQuery.value = ''
-  selectedServices.value = []
-  selectedRegions.value = []
-  selectedOccupancy.value = []
-  selectedStatuses.value = []
+  selectedServices.value = ['all']
+  selectedRegions.value = ['all']
+  selectedOccupancy.value = ['all']
+  selectedStatuses.value = ['all']
+  selectAllServices.value = true
+  selectAllRegions.value = true
   clearDateFilters()
 }
 
