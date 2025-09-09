@@ -617,12 +617,10 @@ const { mutateAsync: updateAccount, isLoading: updating } = useUpdateAccount()
 
 // Состояние поиска и фильтров
 const searchQuery = ref('')
-const selectedServices = ref([])
-const selectedRegions = ref([])
-const selectedOccupancy = ref([])
-const selectedStatuses = ref([])
-const selectAllServices = ref(true)
-const selectAllRegions = ref(true)
+const selectedServices = ref(['all'])
+const selectedRegions = ref(['all'])
+const selectedOccupancy = ref(['all'])
+const selectedStatuses = ref(['all'])
 const dateFrom = ref(null)
 const dateTo = ref(null)
 
@@ -660,7 +658,9 @@ const filteredAccounts = computed(() => {
     filtered = filtered.filter(account => 
       account.login?.toLowerCase().includes(query) ||
       account.service_login_key?.toLowerCase().includes(query) ||
-      account.household_address?.toLowerCase().includes(query)
+      account.household_address?.toLowerCase().includes(query) ||
+      (account.tags && Array.isArray(account.tags) && 
+       account.tags.some(tag => tag.toLowerCase().includes(query)))
     )
   }
   
