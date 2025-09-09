@@ -220,12 +220,9 @@ const isExpiringSoon = computed(() => {
   return paidUntil <= threeDaysFromNow && paidUntil > new Date()
 })
 
-const selectedServices = ref([])
-const selectedRegions = ref([])
-const selectedOccupancy = ref([])
-const selectedStatuses = ref([])
-const selectAllServices = ref(true)
-const selectAllRegions = ref(true)
+// Клиенты для назначения места (исключаем уже занявших места в этом аккаунте)
+const availableCustomers = computed(() => {
+  if (!customers.value) return []
   
   const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
   return customers.value.filter(customer => 
