@@ -624,6 +624,10 @@ const selectedStatuses = ref(['all'])
 const dateFrom = ref(null)
 const dateTo = ref(null)
 
+// Состояние для управления "Выбрать все"
+const selectAllServices = ref(true)
+const selectAllRegions = ref(true)
+
 // Модальные окна
 const showDetailsModal = ref(false)
 const showCreateModal = ref(false)
@@ -659,34 +663,52 @@ const filteredAccounts = computed(() => {
       account.login?.toLowerCase().includes(query) ||
       account.service_login_key?.toLowerCase().includes(query) ||
       account.household_address?.toLowerCase().includes(query)
-    )
+      (Array.isArray(account.tags) && account.tags.some(tag => tag?.toLowerCase().includes(query)))
   }
   
   // Фильтр по сервисам
-  if (!selectedServices.value.includes('all') && selectedServices.value.length > 0) {
+  if (Array.isArray(selectedServices.value) && !selectedServices.value.includes('all') && selectedServices.value.length > 0) {
     filtered = filtered.filter(account => 
       selectedServices.value.includes(account.services_id)
     )
   }
   
-  // Фильтр по регионам
-  if (!selectedRegions.value.includes('all') && selectedRegions.value.length > 0) {
+  if (Array.isArray(selectedRegions.value) && !selectedRegions.value.includes('all') && selectedRegions.value.length > 0) {
+  if (Array.isArray(selectedRegions.value) && !selectedRegions.value.includes('all') && selectedRegions.value.length > 0) {
     filtered = filtered.filter(account => 
       selectedRegions.value.includes(account.regions_id)
     )
   }
   
   // Фильтр по заполненности
-  if (!selectedOccupancy.value.includes('all') && selectedOccupancy.value.length > 0) {
+  if (Array.isArray(selectedOccupancy.value) && !selectedOccupancy.value.includes('all') && selectedOccupancy.value.length > 0) {
+// Существующие теги из аккаунтов
+const existingTags = computed(() => {
+  if (!Array.isArray(accounts.value)) return []
+  
+  const allTags = new Set()
+  accounts.value.forEach(account => {
+  if (Array.isArray(selectedOccupancy.value) && !selectedOccupancy.value.includes('all') && selectedOccupancy.value.length > 0) {
+      account.tags.forEach(tag => {
+        if (tag && typeof tag === 'string' && tag.trim()) {
+          allTags.add(tag.trim())
+        }
+      })
+    }
+  })
+  
+  return Array.from(allTags).sort()
+})
+
     filtered = filtered.filter(account => {
       const seatsTaken = account.seats_taken || 0
       const maxSeats = account.max_seats || 0
       
       return selectedOccupancy.value.some(occupancy => {
-        switch (occupancy) {
+  if (Array.isArray(selectedServices.value) && !selectedServices.value.includes('all') && selectedServices.value.length > 0) {
           case 'empty':
             return seatsTaken === 0
-          case 'partial':
+  if (Array.isArray(selectedStatuses.value) && !selectedStatuses.value.includes('all') && selectedStatuses.value.length > 0) {
             return seatsTaken > 0 && seatsTaken < maxSeats
           case 'full':
             return seatsTaken >= maxSeats
@@ -698,7 +720,7 @@ const filteredAccounts = computed(() => {
   }
   
   // Фильтр по статусу
-  if (!selectedStatuses.value.includes('all') && selectedStatuses.value.length > 0) {
+  if (Array.isArray(selectedStatuses.value) && !selectedStatuses.value.includes('all') && selectedStatuses.value.length > 0) {
     filtered = filtered.filter(account => 
       selectedStatuses.value.includes(account.status)
     )
@@ -738,10 +760,10 @@ const expiringSoonCount = computed(() => {
 
 const hasActiveFilters = computed(() => {
   return searchQuery.value ||
-         !selectedServices.value.includes('all') ||
-         !selectedRegions.value.includes('all') ||
-         !selectedOccupancy.value.includes('all') ||
-         !selectedStatuses.value.includes('all') ||
+         (Array.isArray(selectedServices.value) && !selectedServices.value.includes('all')) ||
+         (Array.isArray(selectedRegions.value) && !selectedRegions.value.includes('all')) ||
+         (Array.isArray(selectedOccupancy.value) && !selectedOccupancy.value.includes('all')) ||
+         (Array.isArray(selectedStatuses.value) && !selectedStatuses.value.includes('all')) ||
          dateFrom.value ||
          dateTo.value
 })
