@@ -202,8 +202,8 @@ const { mutateAsync: deleteAccount } = useDeleteAccount()
 const freeingSeat = ref(null)
 
 // Вычисляемые свойства
-const filteredAccounts = computed(() => {
-  console.log('filteredAccounts computed re-evaluated')
+const occupiedSeats = computed(() => {
+  return seats.value || []
 })
 
 const canAddMoreSeats = computed(() => {
@@ -211,118 +211,39 @@ const canAddMoreSeats = computed(() => {
   const occupiedCount = occupiedSeats.value.length
   return occupiedCount < maxSeats
 })
-  let filtered = accounts.value
 
-  // Фильтр по активной вкладке сервиса
-  if (activeServiceTab.value !== 'all') {
-    filtered = filtered.filter(account => account.services_id === activeServiceTab.value)
-  }
-
-  // Поиск
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(account => 
-      account.login?.toLowerCase().includes(query) ||
-      account.service_login_key?.toLowerCase().includes(query) ||
-      account.household_address?.toLowerCase().includes(query)
-    )
-  }
-
-  // Фильтр по сервисам
-  if (selectedServices.value.length > 0) {
-    filtered = filtered.filter(account => 
-      selectedServices.value.includes(account.services_id)
-    )
-  }
-
-  // Фильтр по регионам
-  if (selectedRegions.value.length > 0) {
-    filtered = filtered.filter(account => 
-      selectedRegions.value.includes(account.regions_id)
-    )
-  }
-
-  // Фильтр по заполненности
-  if (selectedOccupancy.value) {
-    filtered = filtered.filter(account => {
-      const seatsTaken = account.seats_taken || 0
-      const maxSeats = account.max_seats || 0
-      
-      switch (selectedOccupancy.value) {
-        case 'available':
-          return seatsTaken < maxSeats
-        case 'full':
-          return seatsTaken >= maxSeats
-        case 'empty':
-          return seatsTaken === 0
-        default:
-          return true
-      }
-    })
-  }
-
-  // Фильтр по статусу
-  if (selectedStatus.value) {
-    filtered = filtered.filter(account => account.status === selectedStatus.value)
-  }
-
-  // Фильтр по дате истечения
-  if (expiryDateFrom.value) {
-    filtered = filtered.filter(account => {
-      if (!account.paid_until) return false
-      return new Date(account.paid_until) >= new Date(expiryDateFrom.value)
-    })
-  }
-
-  if (expiryDateTo.value) {
-    filtered = filtered.filter(account => {
-      if (!account.paid_until) return false
-      return new Date(account.paid_until) <= new Date(expiryDateTo.value)
-    })
+const isExpiringSoon = computed(() => {
+  if (!props.account?.paid_until) return false
+  const paidUntil = new Date(props.account.paid_until)
   const threeDaysFromNow = new Date()
-
-  return filtered
   threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
   return paidUntil <= threeDaysFromNow && paidUntil > new Date()
 })
+
+  const today = new Date()
+  
+  if (type === 'expiring') {
+    // Истекают в ближайшие 7 дней
+    expiryDateFrom.value = today
+    const weekFromNow = new Date()
+    weekFromNow.setDate(today.getDate() + 7)
+    expiryDateTo.value = weekFromNow
+  } else if (type === 'expired') {
+    // Уже просроченные
+    expiryDateFrom.value = null
+    expiryDateTo.value = today
+  }
+}
+
+function clearDateFilters() {
+  expiryDateFrom.value = null
+  expiryDateTo.value = null
+}
 
 // Клиенты для назначения места (исключаем уже занявших места в этом аккаунте)
 const availableCustomers = computed(() => {
   if (!customers.value) return []
   
-// Опции для фильтров
-const serviceFilterOptions = computed(() => {
-  return services.value || []
-})
-
-const regionFilterOptions = computed(() => {
-  return regions.value || []
-})
-
-const occupancyOptions = [
-  { text: 'Все', value: '' },
-  { text: 'Есть свободные места', value: 'available' },
-  { text: 'Полностью заняты', value: 'full' },
-  { text: 'Пустые', value: 'empty' }
-]
-
-const statusOptions = [
-  { text: 'Все', value: '' },
-  { text: 'Активные', value: 'active' },
-  { text: 'Неактивные', value: 'inactive' }
-]
-
-// Проверка активных фильтров
-const hasActiveFilters = computed(() => {
-  return searchQuery.value ||
-         selectedServices.value.length > 0 ||
-         selectedRegions.value.length > 0 ||
-         selectedOccupancy.value ||
-         selectedStatus.value ||
-         expiryDateFrom.value ||
-         expiryDateTo.value
-})
-
   const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
   return customers.value.filter(customer => 
     !occupiedCustomerIds.includes(customer.$id)
