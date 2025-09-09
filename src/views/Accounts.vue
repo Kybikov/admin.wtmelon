@@ -664,6 +664,7 @@ const filteredAccounts = computed(() => {
       account.service_login_key?.toLowerCase().includes(query) ||
       account.household_address?.toLowerCase().includes(query)
       (Array.isArray(account.tags) && account.tags.some(tag => tag?.toLowerCase().includes(query)))
+    )
   }
   
   // Фильтр по сервисам
@@ -673,7 +674,7 @@ const filteredAccounts = computed(() => {
     )
   }
   
-  if (Array.isArray(selectedRegions.value) && !selectedRegions.value.includes('all') && selectedRegions.value.length > 0) {
+  // Фильтр по регионам
   if (Array.isArray(selectedRegions.value) && !selectedRegions.value.includes('all') && selectedRegions.value.length > 0) {
     filtered = filtered.filter(account => 
       selectedRegions.value.includes(account.regions_id)
@@ -682,33 +683,15 @@ const filteredAccounts = computed(() => {
   
   // Фильтр по заполненности
   if (Array.isArray(selectedOccupancy.value) && !selectedOccupancy.value.includes('all') && selectedOccupancy.value.length > 0) {
-// Существующие теги из аккаунтов
-const existingTags = computed(() => {
-  if (!Array.isArray(accounts.value)) return []
-  
-  const allTags = new Set()
-  accounts.value.forEach(account => {
-  if (Array.isArray(selectedOccupancy.value) && !selectedOccupancy.value.includes('all') && selectedOccupancy.value.length > 0) {
-      account.tags.forEach(tag => {
-        if (tag && typeof tag === 'string' && tag.trim()) {
-          allTags.add(tag.trim())
-        }
-      })
-    }
-  })
-  
-  return Array.from(allTags).sort()
-})
-
     filtered = filtered.filter(account => {
       const seatsTaken = account.seats_taken || 0
       const maxSeats = account.max_seats || 0
       
       return selectedOccupancy.value.some(occupancy => {
-  if (Array.isArray(selectedServices.value) && !selectedServices.value.includes('all') && selectedServices.value.length > 0) {
+        switch (occupancy) {
           case 'empty':
             return seatsTaken === 0
-  if (Array.isArray(selectedStatuses.value) && !selectedStatuses.value.includes('all') && selectedStatuses.value.length > 0) {
+          case 'partial':
             return seatsTaken > 0 && seatsTaken < maxSeats
           case 'full':
             return seatsTaken >= maxSeats
@@ -854,12 +837,10 @@ function clearDateFilters() {
 
 function clearAllFilters() {
   searchQuery.value = ''
-  selectedServices.value = ['all']
-  selectedRegions.value = ['all']
-  selectedOccupancy.value = ['all']
-  selectedStatuses.value = ['all']
-  selectAllServices.value = true
-  selectAllRegions.value = true
+  selectedServices.value = []
+  selectedRegions.value = []
+  selectedOccupancy.value = []
+  selectedStatuses.value = []
   clearDateFilters()
 }
 
