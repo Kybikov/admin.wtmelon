@@ -769,6 +769,20 @@ const hasActiveFilters = computed(() => {
          dateTo.value
 })
 
+const hasDateFilter = computed(() => {
+  return dateFrom.value || dateTo.value
+})
+
+const activeFilterTags = computed(() => {
+  const tags = []
+  
+  if (searchQuery.value) {
+    tags.push({ key: 'search', label: `Поиск: ${searchQuery.value}` })
+  }
+  
+  return tags
+})
+
 const isFormValid = computed(() => {
   return accountForm.services_id &&
          accountForm.regions_id &&
@@ -853,14 +867,74 @@ function clearDateFilters() {
   dateTo.value = null
 }
 
+function toggleAllServices() {
+  if (selectAllServices.value) {
+    selectedServices.value = ['all']
+  } else {
+    selectedServices.value = []
+  }
+}
+
+function toggleAllRegions() {
+  if (selectAllRegions.value) {
+    selectedRegions.value = ['all']
+  } else {
+    selectedRegions.value = []
+  }
+}
+
+function clearServicesFilter() {
+  selectedServices.value = ['all']
+  selectAllServices.value = true
+}
+
+function clearRegionsFilter() {
+  selectedRegions.value = ['all']
+  selectAllRegions.value = true
+}
+
+function clearOccupancyFilter() {
+  selectedOccupancy.value = ['all']
+}
+
+function clearStatusesFilter() {
+  selectedStatuses.value = ['all']
+}
+
+function getSelectedServicesCount() {
+  if (selectedServices.value.includes('all')) return 0
+  return selectedServices.value.length
+}
+
+function getSelectedRegionsCount() {
+  if (selectedRegions.value.includes('all')) return 0
+  return selectedRegions.value.length
+}
+
+function getSelectedOccupancyCount() {
+  if (selectedOccupancy.value.includes('all')) return 0
+  return selectedOccupancy.value.length
+}
+
+function getSelectedStatusesCount() {
+  if (selectedStatuses.value.includes('all')) return 0
+  return selectedStatuses.value.length
+}
+
+function removeFilterTag(tag) {
+  if (tag.key === 'search') {
+    searchQuery.value = ''
+  }
+}
+
 function clearAllFilters() {
   searchQuery.value = ''
   selectedServices.value = ['all']
+  selectAllServices.value = true
   selectedRegions.value = ['all']
+  selectAllRegions.value = true
   selectedOccupancy.value = ['all']
   selectedStatuses.value = ['all']
-  selectAllServices.value = true
-  selectAllRegions.value = true
   clearDateFilters()
 }
 
