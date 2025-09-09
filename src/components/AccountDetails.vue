@@ -197,13 +197,9 @@ const { data: seats, isLoading: seatsLoading } = useAccountSeats(
   computed(() => props.account?.$id)
 )
 const { mutateAsync: freeSeat, isLoading: freeing } = useFreeSeat()
-const { mutateAsync: occupySeat, isLoading: assigningSeat } = useOccupySeat()
 const { mutateAsync: deleteAccount } = useDeleteAccount()
 
 const freeingSeat = ref(null)
-const showAssignSeatModal = ref(false)
-const selectedCustomerForAssign = ref(null)
-const customerSearchQuery = ref('')
 
 // Вычисляемые свойства
 const occupiedSeats = computed(() => {
@@ -222,6 +218,27 @@ const isExpiringSoon = computed(() => {
   const threeDaysFromNow = new Date()
   threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
   return paidUntil <= threeDaysFromNow && paidUntil > new Date()
+})
+
+// Клиенты для назначения места (исключаем уже занявших места в этом аккаунте)
+const availableCustomers = computed(() => {
+  if (!customers.value) return []
+  
+  const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
+  return customers.value.filter(customer => 
+    !occupiedCustomerIds.includes(customer.$id)
+  )
+})
+
+// Фильтрованные клиенты для поиска
+const filteredCustomers = computed(() => {
+  if (!customerSearchQuery.value) return availableCustomers.value.slice(0, 10)
+  
+  const query = customerSearchQuery.value.toLowerCase()
+  return availableCustomers.value.filter(customer =>
+    customer.name?.toLowerCase().includes(query) ||
+    customer.contact_handle?.toLowerCase().includes(query)
+  ).slice(0, 10)
 })
 
 function getCustomerName(customerId) {
