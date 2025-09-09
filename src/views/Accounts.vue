@@ -754,23 +754,6 @@ const isFormValid = computed(() => {
          accountForm.paid_until
 })
 
-// Методы для подсчета выбранных фильтров
-function getSelectedServicesCount() {
-  return Array.isArray(selectedServices.value) ? selectedServices.value.filter(id => id !== 'all').length : 0
-}
-
-function getSelectedRegionsCount() {
-  return Array.isArray(selectedRegions.value) ? selectedRegions.value.filter(id => id !== 'all').length : 0
-}
-
-function getSelectedOccupancyCount() {
-  return Array.isArray(selectedOccupancy.value) ? selectedOccupancy.value.filter(id => id !== 'all').length : 0
-}
-
-function getSelectedStatusesCount() {
-  return Array.isArray(selectedStatuses.value) ? selectedStatuses.value.filter(id => id !== 'all').length : 0
-}
-
 // Методы
 function getServiceName(serviceId) {
   const service = services.value?.find(s => s.$id === serviceId)
@@ -849,10 +832,10 @@ function clearDateFilters() {
 
 function clearAllFilters() {
   searchQuery.value = ''
-  selectedServices.value = ['all']
-  selectedRegions.value = ['all']
-  selectedOccupancy.value = ['all']
-  selectedStatuses.value = ['all']
+  selectedServices.value = []
+  selectedRegions.value = []
+  selectedOccupancy.value = []
+  selectedStatuses.value = []
   clearDateFilters()
 }
 
