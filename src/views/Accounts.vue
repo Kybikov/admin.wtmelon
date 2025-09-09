@@ -1,510 +1,354 @@
 <template>
-  <div class="accounts-page">
-    <!-- Заголовок страницы -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">Аккаунты и семьи</h1>
-        <p class="page-subtitle">Управление семейными аккаунтами сервисов</p>
-      </div>
-      <va-button @click="showCreateModal = true" size="large">
-        <va-icon name="add" class="mr-1" />
-        Добавить аккаунт
-      </va-button>
-    </div>
-
-    <!-- Вкладки по сервисам -->
-    <va-card class="services-tabs-card">
-      <va-tabs v-model="activeServiceTab" class="services-tabs">
-        <template #tabs>
-          <va-tab name="all">
-            Все аккаунты
-          </va-tab>
-          <va-tab 
-            v-for="service in services" 
-            :key="service.$id"
-            :name="service.$id"
-          >
-            {{ service.name }}
-          </va-tab>
-        </template>
+  <va-modal 
+    v-model="isVisible" 
+    :title="account?.login || 'Детали аккаунта'"
+    size="large"
+    @close="handleClose"
+  >
+    <div v-if="account" class="account-details">
+      <!-- Основная информация -->
+      <div class="account-header">
+        <div class="account-info">
+          <h3>[{{ account.service_login_key || 'N/A' }}] {{ account.login }}</h3>
+          <va-chip :color="account.status === 'active' ? 'success' : 'danger'" size="small">
+            {{ account.status === 'active' ? 'Активен' : 'Неактивен' }}
+          </va-chip>
+          <va-chip v-if="isExpiringSoon" color="warning" size="small">
+            Истекает скоро
+          </va-chip>
+        </div>
+        <div class="account-stats">
+          <div class="stat-item">
+            <span class="stat-label">Занято мест:</span>
+            <span class="stat-value">{{ occupiedSeats.length }}/{{ account.max_seats || 0 }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Регион:</span>
+            <span class="stat-value">{{ getRegionName(account.regions_id) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Истекает:</span>
+            <span class="stat-value">{{ formatDate(account.paid_until) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Сервис:</span>
+            <span class="stat-value">{{ getServiceName(account.services_id) }}</span>
+          </div>
+        </div>
         
-        <template #default="{ tabValue }">
-          <div class="tab-content">
-            <div v-if="accountsLoading" class="loading-accounts">
-              <va-progress-circle indeterminate size="large" />
-              <p>Загрузка аккаунтов...</p>
+        <!-- Прогресс заполненности -->
+        <div class="seats-progress-section">
+          <div class="progress-info">
+            <span>Заполненность: {{ occupiedSeats.length }}/{{ account.max_seats || 0 }}</span>
+            <span class="progress-percentage">{{ Math.round((occupiedSeats.length / (account.max_seats || 1)) * 100) }}%</span>
+          </div>
+          <va-progress-bar 
+            :model-value="(occupiedSeats.length / (account.max_seats || 1)) * 100"
+            :color="occupiedSeats.length >= (account.max_seats || 0) ? 'danger' : 'primary'"
+            size="small"
+          />
+        </div>
+      </div>
+
+      <!-- Места в аккаунте -->
+      <div class="seats-section">
+        <div class="seats-header">
+          <h4>Места в аккаунте</h4>
+          <va-button 
+            v-if="canAddMoreSeats"
+            size="small" 
+            @click="handleAddClient"
+          >
+            <va-icon name="person_add" class="mr-1" />
+            Добавить клиента
+          </va-button>
+        </div>
+        
+        <div v-if="seatsLoading" class="loading-seats">
+          <va-progress-circle indeterminate size="small" />
+          <span>Загрузка мест...</span>
+        </div>
+        <div v-else-if="occupiedSeats.length" class="seats-list">
+          <div 
+            v-for="seat in occupiedSeats" 
+            :key="seat.$id"
+            class="seat-item"
+          >
+            <div class="seat-info">
+              <div class="seat-number">Место {{ seat.seat_number || '?' }}</div>
+              <div class="seat-customer">
+                <va-icon name="person" size="16px" />
+                <span>{{ getCustomerName(seat.customers_id) }}</span>
+                <span class="customer-contact">{{ getCustomerContact(seat.customers_id) }}</span>
+              </div>
             </div>
-            
-            <div v-else-if="displayedAccounts.length" class="accounts-grid">
-              <va-card 
-                v-for="account in displayedAccounts" 
-                :key="account.$id"
-                class="account-card"
-                :class="{ 'account-full': account.seats_taken >= account.max_seats }"
+            <div class="seat-actions">
+              <va-button 
+                size="small" 
+                preset="plain" 
+                color="danger"
+                @click="handleFreeSeat(seat)"
+                :loading="freeingSeat === seat.$id"
               >
-                <div class="account-header">
-                  <div class="account-title">
-                    <h3>[{{ account.service_login_key || 'N/A' }}] {{ getServiceName(account.services_id) }}</h3>
-                    <va-chip 
-                      :color="account.status === 'active' ? 'success' : 'danger'" 
-                      size="small"
-                    >
-                      {{ account.status === 'active' ? 'Активен' : 'Неактивен' }}
-                    </va-chip>
-                  </div>
-                  <div class="account-actions">
-                    <va-button 
-                      preset="plain" 
-                      size="small" 
-                      @click="viewAccountDetails(account)"
-                    >
-                      Детали
-                    </va-button>
-                    <va-button 
-                      preset="primary" 
-                      size="small"
-                      :disabled="account.seats_taken >= account.max_seats"
-                      @click="addClientToAccount(account)"
-                    >
-                      Добавить клиента
-                    </va-button>
-                  </div>
-                </div>
-
-                <div class="account-info">
-                  <div class="info-row">
-                    <span class="info-label">Занято:</span>
-                    <span class="info-value">
-                      {{ account.seats_taken || 0 }}/{{ account.max_seats || 0 }} мест
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Админ:</span>
-                    <span class="info-value">
-                      {{ account.seats_taken > 0 ? 'Занят' : 'Свободен' }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Истекает:</span>
-                    <span class="info-value">
-                      {{ formatDate(account.paid_until) }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Регион:</span>
-                    <span class="info-value">
-                      {{ getRegionName(account.regions_id) }}
-                    </span>
-                  </div>
-                  <span v-if="isAccountExpiringSoon(account)" class="expiring-warning">⚠️ Истекает скоро!</span>
-                </div>
-
-                <div class="account-progress">
-                  <va-progress-bar 
-                    :model-value="(account.seats_taken / account.max_seats) * 100"
-                    :color="account.seats_taken >= account.max_seats ? 'danger' : 'primary'"
-                    size="small"
-                  />
-                </div>
-              </va-card>
-            </div>
-            
-            <div v-else class="no-accounts">
-              <va-icon name="account_box" size="64px" color="secondary" />
-              <h3>Нет аккаунтов</h3>
-              <p v-if="activeServiceTab === 'all'">Пока нет созданных аккаунтов</p>
-              <p v-else>Для сервиса {{ getServiceName(activeServiceTab) }} пока нет созданных аккаунтов</p>
-              <va-button @click="showCreateModal = true">
-                Создать первый аккаунт
+                Освободить
               </va-button>
             </div>
           </div>
-        </template>
-      </va-tabs>
-    </va-card>
-
-    <!-- Модальное окно деталей аккаунта -->
-    <AccountDetails
-      v-model="showDetailsModal"
-      :account="selectedAccount"
-      @edit="editAccount"
-      @add-client="handleAddClient"
-    />
-
-    <!-- Модальное окно создания аккаунта -->
-    <va-modal 
-      v-model="showCreateModal" 
-      title="Создать аккаунт"
-      size="large"
-      @close="closeCreateModal"
-    >
-      <div class="create-account-form">
-        <div class="form-row">
-          <va-select
-            v-model="createForm.services_id"
-            label="Сервис *"
-            :options="services"
-            text-by="name"
-            value-by="$id"
-            :rules="[v => !!v || 'Сервис обязателен']"
-            class="form-input"
-          />
-          <va-select
-            v-model="createForm.regions_id"
-            label="Регион *"
-            :options="regions"
-            text-by="name"
-            value-by="$id"
-            :rules="[v => !!v || 'Регион обязателен']"
-            class="form-input"
-          />
         </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="createForm.login" 
-            label="Логин *" 
-            :rules="[v => !!v || 'Логин обязателен']"
-            class="form-input"
-          />
-          <va-input 
-            v-model="createForm.password" 
-            label="Пароль *" 
-            type="password"
-            :rules="[v => !!v || 'Пароль обязателен']"
-            class="form-input"
-          />
+        <div v-else class="no-seats">
+          <va-icon name="people_outline" size="48px" color="secondary" />
+          <p>В этом аккаунте пока нет клиентов</p>
+          <va-button size="small" @click="handleAddClient">
+            Добавить первого клиента
+          </va-button>
         </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="createForm.max_seats" 
-            label="Максимум мест *" 
-            type="number"
-            :min="1"
-            :max="10"
-            :rules="[v => !!v || 'Количество мест обязательно']"
-            class="form-input"
-          />
-          <va-input 
-            v-model="createForm.service_login_key" 
-            label="Ключ аккаунта" 
-            placeholder="Например: SPAC-0001"
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="createForm.cost_price" 
-            label="Цена закупки" 
-            type="number"
-            :min="0"
-            class="form-input"
-          />
-          <va-input 
-            v-model="createForm.sell_price" 
-            label="Цена продажи" 
-            type="number"
-            :min="0"
-            class="form-input"
-          />
-        </div>
-
-        <va-date-input
-          v-model="createForm.paid_until"
-          label="Оплачено до"
-          class="form-input"
-        />
-
-        <va-textarea 
-          v-model="createForm.household_address" 
-          label="Адрес домохозяйства"
-          rows="2"
-          class="form-input"
-        />
-
-        <va-checkbox 
-          v-model="createForm.is_auto_funded"
-          label="Автоматическое финансирование"
-        />
       </div>
 
-      <template #footer>
-        <div class="modal-footer">
-          <va-button preset="secondary" @click="closeCreateModal">
-            Отмена
-          </va-button>
-          <va-button 
-            :loading="creating" 
-            @click="handleCreateAccount"
-            :disabled="!isCreateFormValid"
-          >
-            Создать аккаунт
-          </va-button>
+      <!-- Финансовая информация -->
+      <div class="financial-section">
+        <h4>Финансовая информация</h4>
+        <div class="financial-grid">
+          <div class="financial-item">
+            <span class="financial-label">Стоимость закупки:</span>
+            <span class="financial-value">{{ formatCurrency(account.cost_price || 0) }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Цена продажи:</span>
+            <span class="financial-value">{{ formatCurrency(account.sell_price || 0) }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Автофинансирование:</span>
+            <va-chip :color="account.is_auto_funded ? 'success' : 'secondary'" size="small">
+              {{ account.is_auto_funded ? 'Включено' : 'Выключено' }}
+            </va-chip>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Адрес домохозяйства:</span>
+            <span class="financial-value">{{ account.household_address || 'Не указан' }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Логин:</span>
+            <span class="financial-value">{{ account.login || 'Не указан' }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Пароль:</span>
+            <span class="financial-value">{{ account.password || 'Не указан' }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Создан:</span>
+            <span class="financial-value">{{ formatDate(account.$createdAt) }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="financial-label">Создал:</span>
+            <span class="financial-value">{{ getManagerName(account.manager_id) }}</span>
+          </div>
         </div>
-      </template>
-    </va-modal>
-
-    <!-- Модальное окно редактирования аккаунта -->
-    <va-modal 
-      v-model="showEditModal" 
-      title="Редактировать аккаунт"
-      size="large"
-      @close="closeEditModal"
-    >
-      <div class="create-account-form">
-        <div class="form-row">
-          <va-select
-            v-model="editForm.services_id"
-            label="Сервис *"
-            :options="services"
-            text-by="name"
-            value-by="$id"
-            :rules="[v => !!v || 'Сервис обязателен']"
-            class="form-input"
-          />
-          <va-select
-            v-model="editForm.regions_id"
-            label="Регион *"
-            :options="regions"
-            text-by="name"
-            value-by="$id"
-            :rules="[v => !!v || 'Регион обязателен']"
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="editForm.login" 
-            label="Логин *" 
-            :rules="[v => !!v || 'Логин обязателен']"
-            class="form-input"
-          />
-          <va-input 
-            v-model="editForm.password" 
-            label="Пароль *" 
-            type="password"
-            :rules="[v => !!v || 'Пароль обязателен']"
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="editForm.max_seats" 
-            label="Максимум мест *" 
-            type="number"
-            :min="1"
-            :max="10"
-            :rules="[v => !!v || 'Количество мест обязательно']"
-            class="form-input"
-          />
-          <va-input 
-            v-model="editForm.service_login_key" 
-            label="Ключ аккаунта" 
-            placeholder="Например: SPAC-0001"
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <va-input 
-            v-model="editForm.cost_price" 
-            label="Цена закупки" 
-            type="number"
-            :min="0"
-            class="form-input"
-          />
-          <va-input 
-            v-model="editForm.sell_price" 
-            label="Цена продажи" 
-            type="number"
-            :min="0"
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <va-date-input
-            v-model="editForm.paid_until"
-            label="Оплачено до"
-            class="form-input"
-          />
-          <va-select
-            v-model="editForm.status"
-            label="Статус"
-            :options="[
-              { text: 'Активен', value: 'active' },
-              { text: 'Неактивен', value: 'inactive' }
-            ]"
-            text-by="text"
-            value-by="value"
-            class="form-input"
-          />
-        </div>
-
-        <va-textarea 
-          v-model="editForm.household_address" 
-          label="Адрес домохозяйства"
-          rows="2"
-          class="form-input"
-        />
-
-        <va-checkbox 
-          v-model="editForm.is_auto_funded"
-          label="Автоматическое финансирование"
-        />
       </div>
+    </div>
 
-      <template #footer>
-        <div class="modal-footer">
-          <va-button preset="secondary" @click="closeEditModal">
-            Отмена
-          </va-button>
-          <va-button 
-            :loading="creating" 
-            @click="handleUpdateAccount"
-            :disabled="!isEditFormValid"
-          >
-            Сохранить изменения
-          </va-button>
-        </div>
-      </template>
-    </va-modal>
-  </div>
+    <template #footer>
+      <div class="modal-footer">
+        <va-button @click="handleEdit">
+          Редактировать
+        </va-button>
+        <va-button 
+          preset="plain" 
+          color="danger"
+          @click="handleDelete"
+        >
+          Удалить
+        </va-button>
+      </div>
+    </template>
+  </va-modal>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { account } from '@/appwrite/client'
-import { useAccounts, useCreateAccount, useDeleteAccount, useUpdateAccount } from '@/composables/useAccountsApi'
-import { useServices } from '@/composables/useServicesApi'
+import { ref, computed, watch } from 'vue'
+import { useAccountSeats, useFreeSeat, useDeleteAccount } from '@/composables/useAccountsApi'
 import { useRegions } from '@/composables/useAppwriteCollections'
-import AccountDetails from '@/components/AccountDetails.vue'
+import { useCustomers } from '@/composables/useCustomersApi'
+import { useServices } from '@/composables/useServicesApi'
 
-const router = useRouter()
+// Список менеджеров
+const managers = [
+  { id: '68ba86a3b32ab6dacd62', name: 'Bogdan' },
+  { id: '68ba8622253e92f9d8a2', name: 'Amir' },
+  { id: '68ba8643df93c4a990fb', name: 'Vadim' },
+  { id: '68b4ce040015e10fcd9d', name: 'Test' }
+]
 
-// Проверка авторизации
-onMounted(async () => {
-  try {
-    await account.get()
-    console.log('Auth successful')
-  } catch {
-    router.replace('/login')
-  }
+const props = defineProps({
+  modelValue: Boolean,
+  account: Object
 })
 
-// Данные
-const { data: accounts, isLoading: accountsLoading } = useAccounts()
-const { data: services } = useServices()
+const emit = defineEmits(['update:modelValue', 'edit', 'assign-seat', 'add-client'])
+
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
 const { data: regions } = useRegions()
-const { mutateAsync: createAccount, isLoading: creating } = useCreateAccount()
+const { data: services } = useServices()
+const { data: customers } = useCustomers()
+const { data: seats, isLoading: seatsLoading } = useAccountSeats(
+  computed(() => props.account?.$id)
+)
+const { mutateAsync: freeSeat, isLoading: freeing } = useFreeSeat()
 const { mutateAsync: deleteAccount } = useDeleteAccount()
-const { mutateAsync: updateAccount } = useUpdateAccount()
 
-// Отладка данных
-watch(accounts, (newAccounts) => {
-  console.log('Accounts data:', newAccounts)
-}, { immediate: true })
-
-watch(services, (newServices) => {
-  console.log('Services data:', newServices)
-}, { immediate: true })
-
-watch(accountsLoading, (loading) => {
-  console.log('Accounts loading:', loading)
-}, { immediate: true })
-
-// Состояние
-const activeServiceTab = ref('')
-const showDetailsModal = ref(false)
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
-const selectedAccount = ref(null)
-const isEditMode = ref(false)
-
-// Форма создания аккаунта
-const createForm = reactive({
-  services_id: '',
-  regions_id: '',
-  login: '',
-  password: '',
-  max_seats: 5,
-  service_login_key: '',
-  cost_price: 0,
-  sell_price: 0,
-  paid_until: null,
-  household_address: '',
-  is_auto_funded: false,
-  status: 'active',
-  seats_taken: 0
-})
-
-// Форма редактирования аккаунта (копия createForm)
-const editForm = reactive({
-  services_id: '',
-  regions_id: '',
-  login: '',
-  password: '',
-  max_seats: 5,
-  service_login_key: '',
-  cost_price: 0,
-  sell_price: 0,
-  paid_until: null,
-  household_address: '',
-  is_auto_funded: false,
-  status: 'active'
-})
-
-// Устанавливаем первый сервис как активный при загрузке
-onMounted(() => {
-  activeServiceTab.value = 'all'
-})
+const freeingSeat = ref(null)
 
 // Вычисляемые свойства
-const displayedAccounts = computed(() => {
-  console.log('displayedAccounts computed re-evaluated')
-  console.log('activeServiceTab.value:', activeServiceTab.value)
-  console.log('accounts.value (in computed):', accounts.value)
+const filteredAccounts = computed(() => {
+  console.log('filteredAccounts computed re-evaluated')
+})
 
-  if (!accounts.value) {
-    return []
+const canAddMoreSeats = computed(() => {
+  const maxSeats = props.account?.max_seats || 0
+  const occupiedCount = occupiedSeats.value.length
+  return occupiedCount < maxSeats
+})
+  let filtered = accounts.value
+
+  // Фильтр по активной вкладке сервиса
+  if (activeServiceTab.value !== 'all') {
+    filtered = filtered.filter(account => account.services_id === activeServiceTab.value)
   }
 
-  if (activeServiceTab.value === 'all') {
-    return accounts.value
-  } else {
-    return accounts.value.filter(account => account.services_id === activeServiceTab.value)
+  // Поиск
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(account => 
+      account.login?.toLowerCase().includes(query) ||
+      account.service_login_key?.toLowerCase().includes(query) ||
+      account.household_address?.toLowerCase().includes(query)
+    )
   }
+
+  // Фильтр по сервисам
+  if (selectedServices.value.length > 0) {
+    filtered = filtered.filter(account => 
+      selectedServices.value.includes(account.services_id)
+    )
+  }
+
+  // Фильтр по регионам
+  if (selectedRegions.value.length > 0) {
+    filtered = filtered.filter(account => 
+      selectedRegions.value.includes(account.regions_id)
+    )
+  }
+
+  // Фильтр по заполненности
+  if (selectedOccupancy.value) {
+    filtered = filtered.filter(account => {
+      const seatsTaken = account.seats_taken || 0
+      const maxSeats = account.max_seats || 0
+      
+      switch (selectedOccupancy.value) {
+        case 'available':
+          return seatsTaken < maxSeats
+        case 'full':
+          return seatsTaken >= maxSeats
+        case 'empty':
+          return seatsTaken === 0
+        default:
+          return true
+      }
+    })
+  }
+
+  // Фильтр по статусу
+  if (selectedStatus.value) {
+    filtered = filtered.filter(account => account.status === selectedStatus.value)
+  }
+
+  // Фильтр по дате истечения
+  if (expiryDateFrom.value) {
+    filtered = filtered.filter(account => {
+      if (!account.paid_until) return false
+      return new Date(account.paid_until) >= new Date(expiryDateFrom.value)
+    })
+  }
+
+  if (expiryDateTo.value) {
+    filtered = filtered.filter(account => {
+      if (!account.paid_until) return false
+      return new Date(account.paid_until) <= new Date(expiryDateTo.value)
+    })
+  const threeDaysFromNow = new Date()
+
+  return filtered
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
+  return paidUntil <= threeDaysFromNow && paidUntil > new Date()
 })
 
-const isCreateFormValid = computed(() => {
-  return createForm.services_id && 
-         createForm.regions_id && 
-         createForm.login && 
-         createForm.password && 
-         createForm.max_seats > 0
+// Клиенты для назначения места (исключаем уже занявших места в этом аккаунте)
+const availableCustomers = computed(() => {
+  if (!customers.value) return []
+  
+// Опции для фильтров
+const serviceFilterOptions = computed(() => {
+  return services.value || []
 })
 
-const isEditFormValid = computed(() => {
-  return editForm.services_id && 
-         editForm.regions_id && 
-         editForm.login && 
-         editForm.password && 
-         editForm.max_seats > 0
+const regionFilterOptions = computed(() => {
+  return regions.value || []
 })
 
-// Методы
+const occupancyOptions = [
+  { text: 'Все', value: '' },
+  { text: 'Есть свободные места', value: 'available' },
+  { text: 'Полностью заняты', value: 'full' },
+  { text: 'Пустые', value: 'empty' }
+]
 
-function getAccountsByService(serviceId) {
-  if (!accounts.value || !serviceId) return []
-  return accounts.value.filter(account => account.services_id === serviceId)
+const statusOptions = [
+  { text: 'Все', value: '' },
+  { text: 'Активные', value: 'active' },
+  { text: 'Неактивные', value: 'inactive' }
+]
+
+// Проверка активных фильтров
+const hasActiveFilters = computed(() => {
+  return searchQuery.value ||
+         selectedServices.value.length > 0 ||
+         selectedRegions.value.length > 0 ||
+         selectedOccupancy.value ||
+         selectedStatus.value ||
+         expiryDateFrom.value ||
+         expiryDateTo.value
+})
+
+  const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
+  return customers.value.filter(customer => 
+    !occupiedCustomerIds.includes(customer.$id)
+  )
+})
+
+// Фильтрованные клиенты для поиска
+const filteredCustomers = computed(() => {
+  if (!customerSearchQuery.value) return availableCustomers.value.slice(0, 10)
+  
+  const query = customerSearchQuery.value.toLowerCase()
+  return availableCustomers.value.filter(customer =>
+    customer.name?.toLowerCase().includes(query) ||
+    customer.contact_handle?.toLowerCase().includes(query)
+  ).slice(0, 10)
+})
+
+function getCustomerName(customerId) {
+  const customer = customers.value?.find(c => c.$id === customerId)
+  return customer?.name || 'Неизвестный клиент'
+}
+
+function getCustomerContact(customerId) {
+  const customer = customers.value?.find(c => c.$id === customerId)
+  if (!customer) return ''
+  return customer.contact_handle ? `${customer.contact_type}: ${customer.contact_handle}` : ''
 }
 
 function getServiceName(serviceId) {
@@ -512,41 +356,23 @@ function getServiceName(serviceId) {
   return service?.name || 'Неизвестный сервис'
 }
 
-function getActiveAccountsCount() {
-  if (!accounts.value) return 0
-  return accounts.value.filter(account => account.status === 'active').length
-}
-
-function getExpiringAccountsCount() {
-  if (!accounts.value) return 0
-  const threeDaysFromNow = new Date()
-  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
-  
-  return accounts.value.filter(account => {
-    if (!account.paid_until) return false
-    const paidUntil = new Date(account.paid_until)
-    return paidUntil <= threeDaysFromNow && paidUntil > new Date()
-  }).length
-}
-
-function getFullAccountsCount() {
-  if (!accounts.value) return 0
-  return accounts.value.filter(account => 
-    (account.seats_taken || 0) >= (account.max_seats || 0)
-  ).length
-}
-
-function isAccountExpiringSoon(account) {
-  if (!account.paid_until) return false
-  const paidUntil = new Date(account.paid_until)
-  const threeDaysFromNow = new Date()
-  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
-  return paidUntil <= threeDaysFromNow && paidUntil > new Date()
-}
-
 function getRegionName(regionId) {
   const region = regions.value?.find(r => r.$id === regionId)
-  return region?.name || 'Не указано'
+  return region?.name || 'Неизвестно'
+}
+
+function getManagerName(managerId) {
+  if (!managerId) return 'Не указан'
+  
+  const manager = managers.find(m => m.id === managerId)
+  return manager ? manager.name : `Менеджер ${managerId.slice(-6)}`
+}
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'UAH'
+  }).format(amount)
 }
 
 function formatDate(dateString) {
@@ -554,343 +380,331 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString('ru-RU')
 }
 
-function viewAccountDetails(account) {
-  selectedAccount.value = account
-  showDetailsModal.value = true
+function handleClose() {
+  isVisible.value = false
 }
 
-function editAccount(account) {
-  console.log('Edit account:', account)
+function handleEdit() {
+  emit('edit', props.account)
+}
+
+function handleAddClient() {
+  emit('add-client', props.account)
+}
+
+async function handleDelete() {
+  if (!props.account) return
   
-  // Заполняем форму редактирования данными аккаунта
-  Object.assign(editForm, {
-    services_id: account.services_id || '',
-    regions_id: account.regions_id || '',
-    login: account.login || '',
-    password: account.password || '',
-    max_seats: account.max_seats || 5,
-    service_login_key: account.service_login_key || '',
-    cost_price: account.cost_price || 0,
-    sell_price: account.sell_price || 0,
-    paid_until: account.paid_until || null,
-    household_address: account.household_address || '',
-    is_auto_funded: account.is_auto_funded || false,
-    status: account.status || 'active'
-  })
+  const hasOccupiedSeats = occupiedSeats.value.length > 0
   
-  selectedAccount.value = account
-  isEditMode.value = true
-  showEditModal.value = true
-}
-
-function addClientToAccount(account) {
-  // Перенаправляем на создание подписки с предвыбранным аккаунтом
-  router.push({
-    name: 'new-subscription',
-    query: { accountId: account.$id }
-  })
-}
-
-function handleAssignSeat({ account, seat }) {
-  // Перенаправляем на создание подписки с предвыбранным местом
-  router.push({
-    name: 'new-subscription',
-    query: { 
-      accountId: account.$id,
-      seatId: seat.$id 
-    }
-  })
-}
-
-function handleAddClient(account) {
-  // Перенаправляем на создание подписки с предвыбранным аккаунтом
-  router.push({
-    name: 'new-subscription',
-    query: { 
-      accountId: account.$id
-    }
-  })
-}
-
-function closeCreateModal() {
-  showCreateModal.value = false
-  resetCreateForm()
-}
-
-function closeEditModal() {
-  showEditModal.value = false
-  selectedAccount.value = null
-  isEditMode.value = false
-  resetEditForm()
-}
-
-function resetCreateForm() {
-  Object.assign(createForm, {
-    services_id: '',
-    regions_id: '',
-    login: '',
-    password: '',
-    max_seats: 5,
-    service_login_key: '',
-    cost_price: 0,
-    sell_price: 0,
-    paid_until: null,
-    household_address: '',
-    is_auto_funded: false,
-    status: 'active',
-    seats_taken: 0
-  })
-}
-
-function resetEditForm() {
-  Object.assign(editForm, {
-    services_id: '',
-    regions_id: '',
-    login: '',
-    password: '',
-    max_seats: 5,
-    service_login_key: '',
-    cost_price: 0,
-    sell_price: 0,
-    paid_until: null,
-    household_address: '',
-    is_auto_funded: false,
-    status: 'active'
-  })
-}
-
-async function handleCreateAccount() {
-  if (!isCreateFormValid.value) return
-
+  if (hasOccupiedSeats) {
+    alert('Нельзя удалить аккаунт с занятыми местами. Сначала освободите все места.')
+    return
+  }
+  
+  if (!confirm(`Вы уверены, что хотите удалить аккаунт "${props.account.login}"?`)) {
+    return
+  }
+  
   try {
-    // Создаем payload только с полями, которые существуют в схеме Appwrite
-    const payload = {
-      services_id: createForm.services_id,
-      regions_id: createForm.regions_id,
-      login: createForm.login,
-      password: createForm.password,
-      max_seats: createForm.max_seats,
-      service_login_key: createForm.service_login_key || '',
-      cost_price: createForm.cost_price || 0,
-      sell_price: createForm.sell_price || 0,
-      paid_until: createForm.paid_until,
-      household_address: createForm.household_address || '',
-      is_auto_funded: createForm.is_auto_funded,
-      status: createForm.status,
-      seats_taken: 0
-    }
-
-    await createAccount(payload)
-    closeCreateModal()
+    await deleteAccount(props.account.$id)
+    handleClose()
   } catch (error) {
-    console.error('Ошибка создания аккаунта:', error)
-    alert(`Ошибка при создании аккаунта: ${error.message || 'Неизвестная ошибка'}`)
+    console.error('Ошибка при удалении аккаунта:', error)
+    alert(`Ошибка при удалении аккаунта: ${error.message || 'Неизвестная ошибка'}`)
   }
 }
 
-async function handleUpdateAccount() {
-  if (!isEditFormValid.value || !selectedAccount.value) return
-
+async function handleFreeSeat(seat) {
+  if (!confirm('Вы уверены, что хотите освободить это место?')) return
+  
   try {
-    const payload = {
-      id: selectedAccount.value.$id,
-      services_id: editForm.services_id,
-      regions_id: editForm.regions_id,
-      login: editForm.login,
-      password: editForm.password,
-      max_seats: editForm.max_seats,
-      service_login_key: editForm.service_login_key || '',
-      cost_price: editForm.cost_price || 0,
-      sell_price: editForm.sell_price || 0,
-      paid_until: editForm.paid_until,
-      household_address: editForm.household_address || '',
-      is_auto_funded: editForm.is_auto_funded,
-      status: editForm.status
-    }
-
-    await updateAccount(payload)
-    closeEditModal()
+    freeingSeat.value = seat.$id
+    await freeSeat(seat.$id)
   } catch (error) {
-    console.error('Ошибка обновления аккаунта:', error)
-    alert(`Ошибка при обновлении аккаунта: ${error.message || 'Неизвестная ошибка'}`)
+    console.error('Ошибка при освобождении места:', error)
+  } finally {
+    freeingSeat.value = null
   }
 }
 </script>
 
 <style scoped>
-.accounts-page {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  gap: 24px;
-}
-
-.header-content {
-  flex: 1;
-}
-
-.page-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--va-text-primary);
-  margin: 0 0 8px 0;
-}
-
-.page-subtitle {
-  font-size: 16px;
-  color: var(--va-text-secondary);
-  margin: 0;
-  opacity: 0.8;
-}
-
-.expiring-warning {
-  color: var(--va-warning) !important;
-  font-weight: 600;
-}
-
-/* Вкладки сервисов */
-.services-tabs-card {
-  background: var(--va-background-secondary) !important;
-  border: 1px solid var(--va-background-element) !important;
-  border-radius: 16px !important;
-  padding: 24px !important;
-}
-
-.services-tabs {
-  width: 100%;
-}
-
-.tab-content {
-  padding-top: 24px;
-}
-
-.loading-accounts {
+.account-details {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 60px 20px;
-  gap: 16px;
-}
-
-/* Сетка аккаунтов */
-.accounts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 24px;
-}
-
-.account-card {
-  background: var(--va-background-primary) !important;
-  border: 1px solid var(--va-background-element) !important;
-  border-radius: 16px !important;
-  padding: 20px !important;
-  transition: all 0.2s ease;
-}
-
-.account-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-}
-
-.account-card.account-full {
-  border-color: var(--va-danger);
-  background: rgba(239, 68, 68, 0.05) !important;
 }
 
 .account-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  flex-direction: column;
   gap: 16px;
-}
-
-.account-title h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--va-text-primary);
-  margin: 0 0 8px 0;
-  line-height: 1.3;
-}
-
-.account-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--va-background-element);
 }
 
 .account-info {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
-.info-label {
-  font-size: 14px;
-  color: var(--va-text-secondary);
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--va-text-primary);
-}
-
-.account-progress {
-  margin-top: 12px;
-}
-
-/* Пустое состояние */
-.no-accounts {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.no-accounts h3 {
+.account-info h3 {
+  margin: 0;
   font-size: 20px;
   font-weight: 600;
   color: var(--va-text-primary);
-  margin: 16px 0 8px 0;
 }
 
-.no-accounts p {
-  font-size: 16px;
-  color: var(--va-text-secondary);
-  margin: 0 0 24px 0;
-}
-
-/* Форма создания */
-.create-account-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-row {
+.account-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
-.form-input {
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--va-background-primary);
+  border-radius: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--va-text-secondary);
+}
+
+.stat-value {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-section h4,
+.financial-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.seats-progress-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-background-element);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.progress-percentage {
+  color: var(--va-primary);
+  font-weight: 600;
+}
+
+.seats-info {
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-background-element);
+  margin-bottom: 16px;
+}
+
+.seats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seats-count {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-progress {
   width: 100%;
+}
+
+.seats-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seats-list h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.add-seat-section {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 2px dashed var(--va-background-element);
+}
+
+.loading-seats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  justify-content: center;
+}
+
+.seats-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seats-info {
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-background-element);
+}
+
+.seats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seats-count {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-progress {
+  width: 100%;
+}
+
+.seats-list h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.seats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.seat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 1px solid var(--va-success);
+  background: rgba(29, 185, 84, 0.05);
+  transition: all 0.2s ease;
+}
+
+.add-seat-section {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--va-background-primary);
+  border-radius: 12px;
+  border: 2px dashed var(--va-background-element);
+}
+.seat-info {
+  flex: 1;
+}
+
+.seat-number {
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin-bottom: 4px;
+}
+
+.seat-customer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--va-text-secondary);
+}
+
+.customer-contact {
+  font-style: italic;
+}
+
+.seat-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--va-text-secondary);
+  opacity: 0.7;
+}
+
+.seat-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.financial-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--va-background-primary);
+  border-radius: 8px;
+}
+
+.financial-label {
+  font-size: 14px;
+  color: var(--va-text-secondary);
+}
+
+.financial-value {
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+.no-seats {
+  text-align: center;
+  padding: 20px;
+  color: var(--va-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-seats p {
+  margin: 0;
 }
 
 .modal-footer {
@@ -899,48 +713,22 @@ async function handleUpdateAccount() {
   justify-content: flex-end;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
-  .accounts-page {
-    padding: 16px;
-  }
-  
-  .filters-row {
-    flex-direction: column;
-  }
-  
-  .filter-select {
-    min-width: auto;
-  }
-  
-  .search-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .accounts-grid {
+  .account-stats {
     grid-template-columns: 1fr;
   }
   
-  .form-row {
+  .financial-grid {
     grid-template-columns: 1fr;
   }
   
-  .account-header {
+  .seat-item {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
   
-  .account-actions {
+  .seat-actions {
     justify-content: flex-end;
   }
 }
