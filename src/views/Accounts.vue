@@ -227,22 +227,6 @@ const availableCustomers = computed(() => {
   const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
   return customers.value.filter(customer => 
     !occupiedCustomerIds.includes(customer.$id)
-// Счетчики для бейджей
-function getSelectedServicesCount() {
-  return selectedServices.value.length
-}
-
-function getSelectedRegionsCount() {
-  return selectedRegions.value.length
-}
-
-function getSelectedOccupancyCount() {
-  return selectedOccupancy.value.length
-}
-
-function getSelectedStatusesCount() {
-  return selectedStatuses.value.length
-}
   )
 })
 
@@ -256,6 +240,73 @@ const filteredCustomers = computed(() => {
     customer.contact_handle?.toLowerCase().includes(query)
   ).slice(0, 10)
 })
+
+function clearAllFilters() {
+  searchQuery.value = ''
+  selectedServices.value = []
+  selectedRegions.value = []
+  selectedOccupancy.value = []
+  selectedStatuses.value = []
+  selectAllServices.value = true
+  selectAllRegions.value = true
+  clearDateFilters()
+}
+
+// Управление фильтрами
+function toggleAllServices() {
+  if (selectAllServices.value) {
+    selectedServices.value = []
+  } else {
+    selectedServices.value = services.value?.map(s => s.$id) || []
+  }
+}
+
+function toggleAllRegions() {
+  if (selectAllRegions.value) {
+    selectedRegions.value = []
+  } else {
+    selectedRegions.value = regions.value?.map(r => r.$id) || []
+  }
+}
+
+function clearServicesFilter() {
+  selectedServices.value = []
+  selectAllServices.value = true
+}
+
+function clearRegionsFilter() {
+  selectedRegions.value = []
+  selectAllRegions.value = true
+}
+
+function clearOccupancyFilter() {
+  selectedOccupancy.value = []
+}
+
+function clearStatusesFilter() {
+  selectedStatuses.value = []
+}
+
+// Удаление тега фильтра
+function removeFilterTag(tag) {
+  switch (tag.type) {
+    case 'service':
+      selectedServices.value = selectedServices.value.filter(id => id !== tag.value)
+      break
+    case 'region':
+      selectedRegions.value = selectedRegions.value.filter(id => id !== tag.value)
+      break
+    case 'occupancy':
+      selectedOccupancy.value = selectedOccupancy.value.filter(val => val !== tag.value)
+      break
+    case 'status':
+      selectedStatuses.value = selectedStatuses.value.filter(val => val !== tag.value)
+      break
+    case 'date':
+      clearDateFilters()
+      break
+  }
+}
 
 function getCustomerName(customerId) {
   const customer = customers.value?.find(c => c.$id === customerId)
