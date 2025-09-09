@@ -132,7 +132,7 @@
           </div>
           <div class="financial-item">
             <span class="financial-label">Пароль:</span>
-            <span class="financial-value">{{ account.password ? '••••••••' : 'Не указан' }}</span>
+            <span class="financial-value">{{ account.password || 'Не указан' }}</span>
           </div>
           <div class="financial-item">
             <span class="financial-label">Создан:</span>
