@@ -227,6 +227,22 @@ const availableCustomers = computed(() => {
   const occupiedCustomerIds = occupiedSeats.value.map(seat => seat.customers_id)
   return customers.value.filter(customer => 
     !occupiedCustomerIds.includes(customer.$id)
+// Счетчики для бейджей
+function getSelectedServicesCount() {
+  return selectedServices.value.length
+}
+
+function getSelectedRegionsCount() {
+  return selectedRegions.value.length
+}
+
+function getSelectedOccupancyCount() {
+  return selectedOccupancy.value.length
+}
+
+function getSelectedStatusesCount() {
+  return selectedStatuses.value.length
+}
   )
 })
 
