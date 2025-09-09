@@ -151,6 +151,7 @@ async function createAccount(payload) {
     // Устанавливаем начальные значения
     payload.seats_taken = 0
     payload.status = payload.status || 'active'
+    payload.tags = payload.tags || []
     
     return await db.createDocument(cfg.dbId, cfg.accounts, ID.unique(), payload)
 }

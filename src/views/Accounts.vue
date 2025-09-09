@@ -658,9 +658,7 @@ const filteredAccounts = computed(() => {
     filtered = filtered.filter(account => 
       account.login?.toLowerCase().includes(query) ||
       account.service_login_key?.toLowerCase().includes(query) ||
-      account.household_address?.toLowerCase().includes(query) ||
-      (account.tags && Array.isArray(account.tags) && 
-       account.tags.some(tag => tag.toLowerCase().includes(query)))
+      account.household_address?.toLowerCase().includes(query)
     )
   }
   
@@ -908,7 +906,10 @@ async function handleSubmit() {
   try {
     const payload = {
       ...accountForm,
-      paid_until: accountForm.paid_until ? accountForm.paid_until.toISOString() : null
+      paid_until: accountForm.paid_until ? accountForm.paid_until.toISOString() : null,
+      tags: accountForm.tags 
+        ? accountForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+        : []
     }
 
     if (isEditMode.value && selectedAccount.value) {
